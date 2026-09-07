@@ -406,22 +406,41 @@
       loading.classList.add('hidden');
     }, 8000);
 
+    // Apps Script's visible page is nested inside Google's sandbox iframe.
+    // The message therefore comes from that inner window, not directly from
+    // frame.contentWindow. Remember the exact sender so scanner results can
+    // be posted back to the correct Apps Script window.
+    let libraryMessageWindow = null;
+
     window.addEventListener('message', event => {
-      // Only accept commands from the Apps Script iframe already on this page.
-      if (event.source !== frame.contentWindow) {
+      const data = event.data || {};
+
+      if (data.type !== 'wiseman-library-open-scanner') {
         return;
       }
 
-      const data = event.data || {};
-
-      if (data.type === 'wiseman-library-open-scanner') {
-        openScanner();
+      if (!event.source || event.source === window) {
+        return;
       }
+
+      libraryMessageWindow = event.source;
+      openScanner();
     });
 
     function sendToLibrary(message) {
-      if (!frame.contentWindow) return;
-      frame.contentWindow.postMessage(message, '*');
+      if (libraryMessageWindow) {
+        try {
+          libraryMessageWindow.postMessage(message, '*');
+          return;
+        } catch (error) {
+          console.warn('Could not message Apps Script inner frame.', error);
+        }
+      }
+
+      // Fallback for browsers where Apps Script is not nested as expected.
+      if (frame.contentWindow) {
+        frame.contentWindow.postMessage(message, '*');
+      }
     }
 
     function isValidEan13(code) {
