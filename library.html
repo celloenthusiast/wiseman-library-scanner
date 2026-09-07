@@ -1,156 +1,740 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <title>My Library</title>
 
-  <!-- Browser favicon -->
-  <link
-    rel="icon"
-    type="image/png"
-    href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png"
-  >
-
-  <!-- iPhone/iPad Home Screen icon -->
-  <link
-    rel="apple-touch-icon"
-    sizes="180x180"
-    href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png"
-  >
-
-  <!-- Mobile web app settings -->
+  <link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
+  <link rel="apple-touch-icon" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="My Library">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#1f5f4a">
+  <meta name="theme-color" content="#ffffff">
+
+  <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.12.1/dist/quagga.min.js"></script>
 
   <style>
+    :root {
+      --bg:#ffffff;
+      --accent:#1f5f4a;
+      --text:#17202a;
+      --muted:#667085;
+      --danger:#b42318;
+    }
+
     * {
-      box-sizing: border-box;
+      box-sizing:border-box;
+      -webkit-tap-highlight-color:transparent;
     }
 
     html,
     body {
-      margin: 0;
-      width: 100%;
-      min-height: 100%;
-      min-height: 100svh;
-      font-family:
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-      background: #f4f5f3;
-      color: #17231e;
+      margin:0;
+      padding:0;
+      width:100%;
+      height:100%;
+      min-height:100vh;
+      min-height:100svh;
+      overflow:hidden;
+      background:var(--bg);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     }
 
-    body {
-      display: grid;
-      place-items: center;
-      padding: 24px;
+    #appFrame {
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      height:100svh;
+      border:0;
+      margin:0;
+      padding:0;
+      background:#fff;
+      z-index:1;
     }
 
-    .card {
-      width: min(100%, 360px);
-      text-align: center;
-      background: #ffffff;
-      border: 1px solid #dfe4e1;
-      border-radius: 22px;
-      padding: 28px 22px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.07);
+    #loading {
+      position:fixed;
+      inset:0;
+      z-index:20;
+      display:grid;
+      place-items:center;
+      background:#fff;
+      transition:opacity .18s ease;
     }
 
-    .icon {
-      width: 120px;
-      height: 120px;
-      border-radius: 26px;
-      object-fit: cover;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    #loading.hidden {
+      opacity:0;
+      pointer-events:none;
     }
 
-    h1 {
-      margin: 18px 0 8px;
-      font-size: 26px;
+    .loadingInner {
+      text-align:center;
+      padding:24px;
     }
 
-    p {
-      margin: 0 0 14px;
-      color: #667085;
-      line-height: 1.45;
+    .loadingIcon {
+      width:96px;
+      height:96px;
+      border-radius:22px;
+      object-fit:cover;
+      box-shadow:0 6px 20px rgba(0,0,0,.10);
     }
 
-    .hint {
-      margin-top: 18px;
-      padding: 13px 14px;
-      background: #eef5f1;
-      border-radius: 12px;
-      font-size: 14px;
-      color: #365647;
+    .loadingTitle {
+      margin-top:14px;
+      font-size:21px;
+      font-weight:750;
+      color:var(--text);
     }
 
-    .button {
-      display: block;
-      margin-top: 18px;
-      padding: 14px 18px;
-      border-radius: 12px;
-      background: #1f5f4a;
-      color: #ffffff;
-      text-decoration: none;
-      font-weight: 750;
-      font-size: 16px;
+    .loadingText {
+      margin-top:5px;
+      font-size:14px;
+      color:var(--muted);
+    }
+
+    .spinner {
+      width:24px;
+      height:24px;
+      margin:18px auto 0;
+      border:3px solid #dce5e1;
+      border-top-color:var(--accent);
+      border-radius:50%;
+      animation:spin .8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform:rotate(360deg); }
+    }
+
+    /* Built-in scanner */
+    #scannerOverlay {
+      position:fixed;
+      inset:0;
+      z-index:100;
+      display:none;
+      background:#000;
+      color:#fff;
+      overflow:hidden;
+    }
+
+    #scannerOverlay.show {
+      display:block;
+    }
+
+    #scannerViewport {
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      background:#000;
+      overflow:hidden;
+    }
+
+    #scannerViewport video,
+    #scannerViewport canvas {
+      position:absolute !important;
+      inset:0 !important;
+      width:100% !important;
+      height:100% !important;
+      object-fit:cover !important;
+    }
+
+    #scannerViewport canvas.drawingBuffer {
+      display:none !important;
+    }
+
+    .scannerShade {
+      position:absolute;
+      inset:0;
+      z-index:5;
+      pointer-events:none;
+      background:
+        linear-gradient(
+          to bottom,
+          rgba(0,0,0,.58) 0 31%,
+          rgba(0,0,0,.08) 31% 57%,
+          rgba(0,0,0,.58) 57% 100%
+        );
+    }
+
+    .scanTarget {
+      position:absolute;
+      z-index:6;
+      left:5vw;
+      right:5vw;
+      top:31vh;
+      height:26vh;
+      min-height:145px;
+      max-height:210px;
+      border:3px solid rgba(255,255,255,.96);
+      border-radius:18px;
+      pointer-events:none;
+      box-shadow:0 0 0 1px rgba(0,0,0,.35);
+    }
+
+    .scanTarget::after {
+      content:"";
+      position:absolute;
+      left:5%;
+      right:5%;
+      top:50%;
+      height:2px;
+      transform:translateY(-1px);
+      background:#ff4d4d;
+      box-shadow:0 0 8px rgba(255,77,77,.8);
+    }
+
+    .scannerTop {
+      position:absolute;
+      z-index:10;
+      top:0;
+      left:0;
+      right:0;
+      padding:max(16px,env(safe-area-inset-top)) 18px 14px;
+      text-align:center;
+      text-shadow:0 1px 5px #000;
+    }
+
+    .scannerTop h1 {
+      margin:5px 0 4px;
+      font-size:22px;
+    }
+
+    .scannerTop p {
+      margin:0;
+      font-size:14px;
+      opacity:.92;
+    }
+
+    .scannerBottom {
+      position:absolute;
+      z-index:10;
+      left:0;
+      right:0;
+      bottom:0;
+      padding:16px 16px max(18px,env(safe-area-inset-bottom));
+      text-align:center;
+    }
+
+    #scannerStatus {
+      min-height:22px;
+      margin-bottom:10px;
+      font-size:14px;
+      text-shadow:0 1px 5px #000;
+    }
+
+    .scannerButtons {
+      display:flex;
+      justify-content:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .scannerButtons button {
+      min-height:48px;
+      border:0;
+      border-radius:12px;
+      padding:10px 16px;
+      font:inherit;
+      font-weight:700;
+      background:rgba(255,255,255,.94);
+      color:#17202a;
+    }
+
+    .scannerButtons button.accent {
+      background:rgba(31,95,74,.95);
+      color:#fff;
+    }
+
+    .scannerButtons button.danger {
+      background:rgba(180,35,24,.94);
+      color:#fff;
+    }
+
+    #torchButton {
+      display:none;
+    }
+
+    #scanSuccess {
+      position:absolute;
+      inset:0;
+      z-index:20;
+      display:none;
+      place-items:center;
+      text-align:center;
+      background:rgba(8,25,18,.78);
+      pointer-events:none;
+    }
+
+    #scanSuccess.show {
+      display:grid;
+    }
+
+    .successCheck {
+      font-size:64px;
+      line-height:1;
+    }
+
+    .successCode {
+      margin-top:8px;
+      font-size:22px;
+      font-weight:800;
+    }
+
+    #cameraReadyChip {
+      position:fixed;
+      z-index:90;
+      top:max(8px, env(safe-area-inset-top));
+      right:max(8px, env(safe-area-inset-right));
+      display:none;
+      align-items:center;
+      gap:7px;
+      padding:7px 8px 7px 11px;
+      border-radius:999px;
+      background:rgba(23,32,42,.88);
+      color:#fff;
+      font-size:12px;
+      box-shadow:0 3px 14px rgba(0,0,0,.18);
+      backdrop-filter:blur(10px);
+    }
+
+    #cameraReadyChip.show {
+      display:flex;
+    }
+
+    #cameraReadyChip button {
+      width:26px;
+      height:26px;
+      min-width:26px;
+      padding:0;
+      border:0;
+      border-radius:50%;
+      background:rgba(255,255,255,.18);
+      color:#fff;
+      font-size:16px;
+      line-height:1;
     }
   </style>
 </head>
 
 <body>
-  <main class="card">
-    <img
-      class="icon"
-      src="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png"
-      alt="My Library icon"
-    >
+  <div id="loading">
+    <div class="loadingInner">
+      <img class="loadingIcon" src="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png" alt="">
+      <div class="loadingTitle">My Library</div>
+      <div class="loadingText">Opening library…</div>
+      <div class="spinner" aria-hidden="true"></div>
+    </div>
+  </div>
 
-    <h1>My Library</h1>
+  <iframe
+    id="appFrame"
+    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0907D"
+    title="My Library"
+    allow="clipboard-read; clipboard-write"
+  ></iframe>
 
-    <p>
-      Add this page to your Home Screen to install the Library shortcut.
-    </p>
+  <div id="cameraReadyChip">
+    <span>Camera ready</span>
+    <button type="button" aria-label="Stop camera" onclick="stopCameraNow()">×</button>
+  </div>
 
-    <div class="hint">
-      On iPhone: tap <strong>Share</strong> →
-      <strong>Add to Home Screen</strong>.
+  <div id="scannerOverlay" aria-hidden="true">
+    <div id="scannerViewport"></div>
+    <div class="scannerShade"></div>
+    <div class="scanTarget"></div>
+
+    <div class="scannerTop">
+      <h1>Scan Book Barcode</h1>
+      <p>Fill the box with the 978/979 ISBN barcode.</p>
     </div>
 
-    <a
-      class="button"
-      href="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec"
-    >
-      Open Library Now
-    </a>
-  </main>
+    <div class="scannerBottom">
+      <div id="scannerStatus">Starting rear camera…</div>
+      <div class="scannerButtons">
+        <button type="button" onclick="hideScanner(true)">Cancel</button>
+        <button id="torchButton" class="accent" type="button" onclick="toggleTorch()">Flash</button>
+        <button class="danger" type="button" onclick="stopCameraNow()">End Camera</button>
+      </div>
+    </div>
+
+    <div id="scanSuccess">
+      <div>
+        <div class="successCheck">✓</div>
+        <div>ISBN read</div>
+        <div id="successCode" class="successCode"></div>
+      </div>
+    </div>
+  </div>
 
   <script>
-    const libraryUrl =
-      "https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec";
+    'use strict';
 
-    // Detect whether this page was launched from the Home Screen.
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      window.navigator.standalone === true;
+    const frame = document.getElementById('appFrame');
+    const loading = document.getElementById('loading');
+    const scannerOverlay = document.getElementById('scannerOverlay');
+    const scannerStatus = document.getElementById('scannerStatus');
+    const scanSuccess = document.getElementById('scanSuccess');
+    const successCode = document.getElementById('successCode');
+    const torchButton = document.getElementById('torchButton');
+    const cameraReadyChip = document.getElementById('cameraReadyChip');
 
-    // When launched from the Home Screen, open the actual library app.
-    if (isStandalone) {
-      window.location.replace(libraryUrl);
+    const KEEP_CAMERA_WARM_MS = 60000;
+
+    let scannerInitialized = false;
+    let cameraRunning = false;
+    let scannerVisible = false;
+    let acceptingScan = false;
+    let torchOn = false;
+    let warmTimer = null;
+    let lastCandidate = '';
+    let lastCandidateAt = 0;
+    let candidateHits = 0;
+
+    frame.addEventListener('load', () => {
+      setTimeout(() => {
+        loading.classList.add('hidden');
+      }, 250);
+    });
+
+    setTimeout(() => {
+      loading.classList.add('hidden');
+    }, 8000);
+
+    window.addEventListener('message', event => {
+      // Only accept commands from the Apps Script iframe already on this page.
+      if (event.source !== frame.contentWindow) {
+        return;
+      }
+
+      const data = event.data || {};
+
+      if (data.type === 'wiseman-library-open-scanner') {
+        openScanner();
+      }
+    });
+
+    function sendToLibrary(message) {
+      if (!frame.contentWindow) return;
+      frame.contentWindow.postMessage(message, '*');
     }
+
+    function isValidEan13(code) {
+      if (!/^\d{13}$/.test(code)) return false;
+
+      let sum = 0;
+
+      for (let i = 0; i < 12; i++) {
+        const digit = Number(code[i]);
+        sum += digit * (i % 2 === 0 ? 1 : 3);
+      }
+
+      const check = (10 - (sum % 10)) % 10;
+      return check === Number(code[12]);
+    }
+
+    function normalizeBookBarcode(raw) {
+      const digits = String(raw || '').replace(/\D/g, '');
+
+      if (
+        digits.length === 13 &&
+        (digits.startsWith('978') || digits.startsWith('979')) &&
+        isValidEan13(digits)
+      ) {
+        return digits;
+      }
+
+      return '';
+    }
+
+    async function openScanner() {
+      clearTimeout(warmTimer);
+      warmTimer = null;
+
+      scannerVisible = true;
+      acceptingScan = true;
+      lastCandidate = '';
+      candidateHits = 0;
+      lastCandidateAt = 0;
+
+      scannerOverlay.classList.add('show');
+      scannerOverlay.setAttribute('aria-hidden', 'false');
+      cameraReadyChip.classList.remove('show');
+      scanSuccess.classList.remove('show');
+
+      if (cameraRunning) {
+        scannerStatus.textContent = 'Ready — hold the ISBN barcode inside the box.';
+        sendToLibrary({ type:'wiseman-library-scanner-opened' });
+        return;
+      }
+
+      scannerStatus.textContent = 'Starting rear camera…';
+
+      try {
+        await initializeScanner();
+        sendToLibrary({ type:'wiseman-library-scanner-opened' });
+      } catch (error) {
+        console.error(error);
+        scannerStatus.textContent = 'Camera could not start. Check Safari camera permission for this site.';
+        sendToLibrary({
+          type:'wiseman-library-scanner-error',
+          message:'Camera could not start. Check Safari camera permission for the GitHub library page.'
+        });
+      }
+    }
+
+    function initializeScanner() {
+      return new Promise((resolve, reject) => {
+        if (typeof Quagga === 'undefined') {
+          reject(new Error('Barcode scanner library did not load.'));
+          return;
+        }
+
+        try {
+          Quagga.offDetected();
+        } catch (error) {}
+
+        const workers = Math.max(
+          1,
+          Math.min(4, Number(navigator.hardwareConcurrency || 2) - 1 || 1)
+        );
+
+        Quagga.init(
+          {
+            inputStream: {
+              name:'Live',
+              type:'LiveStream',
+              target:document.getElementById('scannerViewport'),
+              constraints: {
+                facingMode:'environment',
+                width:{ ideal:1920 },
+                height:{ ideal:1080 }
+              },
+              area: {
+                top:'31%',
+                right:'5%',
+                left:'5%',
+                bottom:'43%'
+              }
+            },
+            locator: {
+              patchSize:'medium',
+              halfSample:true
+            },
+            decoder: {
+              readers:['ean_reader'],
+              multiple:false
+            },
+            locate:false,
+            numOfWorkers:workers
+          },
+          async function(error) {
+            if (error) {
+              reject(error);
+              return;
+            }
+
+            scannerInitialized = true;
+            Quagga.onDetected(handleDetection);
+            Quagga.start();
+            cameraRunning = true;
+            scannerStatus.textContent = 'Ready — hold the ISBN barcode inside the box.';
+
+            await tuneCamera();
+            detectTorch();
+            resolve();
+          }
+        );
+      });
+    }
+
+    async function tuneCamera() {
+      try {
+        const track = Quagga.CameraAccess && Quagga.CameraAccess.getActiveTrack
+          ? Quagga.CameraAccess.getActiveTrack()
+          : null;
+
+        if (!track || !track.getCapabilities || !track.applyConstraints) {
+          return;
+        }
+
+        const caps = track.getCapabilities();
+
+        if (
+          Array.isArray(caps.focusMode) &&
+          caps.focusMode.includes('continuous')
+        ) {
+          try {
+            await track.applyConstraints({
+              advanced:[{ focusMode:'continuous' }]
+            });
+          } catch (error) {}
+        }
+      } catch (error) {
+        console.warn('Camera tuning unavailable.', error);
+      }
+    }
+
+    function handleDetection(result) {
+      if (!scannerVisible || !acceptingScan) {
+        return;
+      }
+
+      const code = normalizeBookBarcode(
+        result && result.codeResult
+          ? result.codeResult.code
+          : ''
+      );
+
+      if (!code) return;
+
+      const now = Date.now();
+
+      if (
+        code === lastCandidate &&
+        now - lastCandidateAt < 1200
+      ) {
+        candidateHits += 1;
+      } else {
+        lastCandidate = code;
+        candidateHits = 1;
+      }
+
+      lastCandidateAt = now;
+      scannerStatus.textContent = candidateHits >= 2
+        ? 'Barcode confirmed.'
+        : 'Reading… hold steady.';
+
+      // Two matching reads makes Quagga much less likely to accept a false
+      // decode while still being effectively instant when the barcode is clear.
+      if (candidateHits >= 2) {
+        acceptBarcode(code);
+      }
+    }
+
+    function acceptBarcode(isbn) {
+      if (!acceptingScan) return;
+
+      acceptingScan = false;
+
+      if (navigator.vibrate) {
+        navigator.vibrate(70);
+      }
+
+      successCode.textContent = isbn;
+      scanSuccess.classList.add('show');
+
+      sendToLibrary({
+        type:'wiseman-library-isbn',
+        isbn:isbn
+      });
+
+      setTimeout(() => {
+        scanSuccess.classList.remove('show');
+        hideScanner(true);
+      }, 260);
+    }
+
+    function hideScanner(keepWarm) {
+      scannerVisible = false;
+      acceptingScan = false;
+      scannerOverlay.classList.remove('show');
+      scannerOverlay.setAttribute('aria-hidden', 'true');
+
+      if (cameraRunning && keepWarm) {
+        cameraReadyChip.classList.add('show');
+        scheduleWarmStop();
+      } else if (cameraRunning) {
+        stopCameraNow();
+      }
+    }
+
+    function scheduleWarmStop() {
+      clearTimeout(warmTimer);
+
+      warmTimer = setTimeout(() => {
+        stopCameraNow();
+      }, KEEP_CAMERA_WARM_MS);
+    }
+
+    async function stopCameraNow() {
+      clearTimeout(warmTimer);
+      warmTimer = null;
+      scannerVisible = false;
+      acceptingScan = false;
+      torchOn = false;
+      torchButton.textContent = 'Flash';
+      scannerOverlay.classList.remove('show');
+      scannerOverlay.setAttribute('aria-hidden', 'true');
+      cameraReadyChip.classList.remove('show');
+
+      if (!cameraRunning) {
+        return;
+      }
+
+      try {
+        Quagga.offDetected();
+      } catch (error) {}
+
+      try {
+        Quagga.stop();
+      } catch (error) {
+        console.warn('Could not stop scanner cleanly.', error);
+      }
+
+      cameraRunning = false;
+      scannerInitialized = false;
+
+      const viewport = document.getElementById('scannerViewport');
+      viewport.innerHTML = '';
+    }
+
+    function detectTorch() {
+      torchButton.style.display = 'none';
+
+      try {
+        const track = Quagga.CameraAccess && Quagga.CameraAccess.getActiveTrack
+          ? Quagga.CameraAccess.getActiveTrack()
+          : null;
+
+        if (!track || !track.getCapabilities) return;
+
+        const caps = track.getCapabilities();
+
+        if (caps && caps.torch) {
+          torchButton.style.display = 'inline-block';
+        }
+      } catch (error) {}
+    }
+
+    async function toggleTorch() {
+      try {
+        if (!Quagga.CameraAccess) return;
+
+        if (torchOn) {
+          await Quagga.CameraAccess.disableTorch();
+          torchOn = false;
+          torchButton.textContent = 'Flash';
+        } else {
+          await Quagga.CameraAccess.enableTorch();
+          torchOn = true;
+          torchButton.textContent = 'Flash Off';
+        }
+      } catch (error) {
+        torchButton.style.display = 'none';
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && cameraRunning) {
+        stopCameraNow();
+      }
+    });
   </script>
 </body>
 </html>
-```
