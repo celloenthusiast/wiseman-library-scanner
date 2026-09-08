@@ -285,40 +285,6 @@
       font-size:22px;
       font-weight:800;
     }
-
-    #cameraReadyChip {
-      position:fixed;
-      z-index:90;
-      top:max(8px, env(safe-area-inset-top));
-      right:max(8px, env(safe-area-inset-right));
-      display:none;
-      align-items:center;
-      gap:7px;
-      padding:7px 8px 7px 11px;
-      border-radius:999px;
-      background:rgba(23,32,42,.88);
-      color:#fff;
-      font-size:12px;
-      box-shadow:0 3px 14px rgba(0,0,0,.18);
-      backdrop-filter:blur(10px);
-    }
-
-    #cameraReadyChip.show {
-      display:flex;
-    }
-
-    #cameraReadyChip button {
-      width:26px;
-      height:26px;
-      min-width:26px;
-      padding:0;
-      border:0;
-      border-radius:50%;
-      background:rgba(255,255,255,.18);
-      color:#fff;
-      font-size:16px;
-      line-height:1;
-    }
   </style>
 </head>
 
@@ -334,16 +300,10 @@
 
   <iframe
     id="appFrame"
-    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0907D"
+    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0908A"
     title="My Library"
     allow="clipboard-read; clipboard-write"
   ></iframe>
-
-  <div id="cameraReadyChip">
-    <span>Camera ready</span>
-    <button type="button" aria-label="Stop camera" onclick="stopCameraNow()">×</button>
-  </div>
-
   <div id="scannerOverlay" aria-hidden="true">
     <div id="scannerViewport"></div>
     <div class="scannerShade"></div>
@@ -357,9 +317,8 @@
     <div class="scannerBottom">
       <div id="scannerStatus">Starting rear camera…</div>
       <div class="scannerButtons">
-        <button type="button" onclick="hideScanner(true)">Cancel</button>
+        <button type="button" onclick="hideScanner()">Cancel</button>
         <button id="torchButton" class="accent" type="button" onclick="toggleTorch()">Flash</button>
-        <button class="danger" type="button" onclick="stopCameraNow()">End Camera</button>
       </div>
     </div>
 
@@ -382,16 +341,11 @@
     const scanSuccess = document.getElementById('scanSuccess');
     const successCode = document.getElementById('successCode');
     const torchButton = document.getElementById('torchButton');
-    const cameraReadyChip = document.getElementById('cameraReadyChip');
-
-    const KEEP_CAMERA_WARM_MS = 60000;
-
     let scannerInitialized = false;
     let cameraRunning = false;
     let scannerVisible = false;
     let acceptingScan = false;
     let torchOn = false;
-    let warmTimer = null;
     let lastCandidate = '';
     let lastCandidateAt = 0;
     let candidateHits = 0;
@@ -472,9 +426,6 @@
     }
 
     async function openScanner() {
-      clearTimeout(warmTimer);
-      warmTimer = null;
-
       scannerVisible = true;
       acceptingScan = true;
       lastCandidate = '';
@@ -483,7 +434,6 @@
 
       scannerOverlay.classList.add('show');
       scannerOverlay.setAttribute('aria-hidden', 'false');
-      cameraReadyChip.classList.remove('show');
       scanSuccess.classList.remove('show');
 
       if (cameraRunning) {
@@ -653,48 +603,39 @@
         isbn:isbn
       });
 
+      // Release the camera immediately between books. A brief success
+      // flash remains visible, but the camera/decoder is stopped underneath it.
+      stopCameraNow();
+
       setTimeout(() => {
         scanSuccess.classList.remove('show');
-        hideScanner(true);
-      }, 260);
+      }, 220);
     }
 
-    function hideScanner(keepWarm) {
-      scannerVisible = false;
-      acceptingScan = false;
-      scannerOverlay.classList.remove('show');
-      scannerOverlay.setAttribute('aria-hidden', 'true');
-
-      if (cameraRunning && keepWarm) {
-        cameraReadyChip.classList.add('show');
-        scheduleWarmStop();
-      } else if (cameraRunning) {
-        stopCameraNow();
-      }
-    }
-
-    function scheduleWarmStop() {
-      clearTimeout(warmTimer);
-
-      warmTimer = setTimeout(() => {
-        stopCameraNow();
-      }, KEEP_CAMERA_WARM_MS);
+    function hideScanner() {
+      stopCameraNow();
     }
 
     async function stopCameraNow() {
-      clearTimeout(warmTimer);
-      warmTimer = null;
       scannerVisible = false;
       acceptingScan = false;
       torchOn = false;
       torchButton.textContent = 'Flash';
       scannerOverlay.classList.remove('show');
       scannerOverlay.setAttribute('aria-hidden', 'true');
-      cameraReadyChip.classList.remove('show');
 
       if (!cameraRunning) {
         return;
       }
+
+      let activeTrack = null;
+
+      try {
+        activeTrack =
+          Quagga.CameraAccess && Quagga.CameraAccess.getActiveTrack
+            ? Quagga.CameraAccess.getActiveTrack()
+            : null;
+      } catch (error) {}
 
       try {
         Quagga.offDetected();
@@ -705,6 +646,14 @@
       } catch (error) {
         console.warn('Could not stop scanner cleanly.', error);
       }
+
+      // Explicitly stop the MediaStreamTrack as a second safeguard so iOS
+      // releases the physical camera between scans.
+      try {
+        if (activeTrack && activeTrack.readyState !== 'ended') {
+          activeTrack.stop();
+        }
+      } catch (error) {}
 
       cameraRunning = false;
       scannerInitialized = false;
