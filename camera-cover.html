@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Take Cover Photo</title>
+  <style>
+    * { box-sizing:border-box; }
+
+    html, body {
+      margin:0;
+      width:100%;
+      height:100%;
+      min-height:100svh;
+      overflow:hidden;
+      background:#000;
+      color:#fff;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+
+    #video {
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      background:#000;
+    }
+
+    .shade {
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(to bottom,
+          rgba(0,0,0,.55) 0,
+          rgba(0,0,0,.10) 24%,
+          rgba(0,0,0,.05) 72%,
+          rgba(0,0,0,.68) 100%);
+    }
+
+    .frame {
+      position:fixed;
+      left:50%;
+      top:50%;
+      width:min(76vw,430px);
+      aspect-ratio:2 / 3;
+      transform:translate(-50%,-50%);
+      border:3px solid rgba(255,255,255,.9);
+      border-radius:15px;
+      pointer-events:none;
+    }
+
+    .top {
+      position:fixed;
+      left:0;
+      right:0;
+      top:0;
+      padding:max(18px,env(safe-area-inset-top)) 18px 16px;
+      text-align:center;
+      text-shadow:0 2px 6px rgba(0,0,0,.7);
+    }
+
+    h1 {
+      margin:0;
+      font-size:24px;
+    }
+
+    .top p {
+      margin:5px 0 0;
+      font-size:14px;
+      color:rgba(255,255,255,.9);
+    }
+
+    .bottom {
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:0;
+      padding:18px 14px max(18px,env(safe-area-inset-bottom));
+      background:linear-gradient(transparent,rgba(0,0,0,.82) 30%);
+      text-align:center;
+    }
+
+    #status {
+      min-height:22px;
+      margin-bottom:12px;
+      font-size:14px;
+    }
+
+    .buttons {
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    button, .fallbackLabel {
+      border:0;
+      border-radius:12px;
+      min-height:48px;
+      padding:11px 16px;
+      font:inherit;
+      font-weight:700;
+      background:rgba(255,255,255,.94);
+      color:#111;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      text-decoration:none;
+    }
+
+    #captureButton {
+      min-width:132px;
+      min-height:56px;
+      font-size:17px;
+      box-shadow:0 0 0 4px rgba(255,255,255,.2);
+    }
+
+    button:disabled {
+      opacity:.55;
+    }
+
+    #fallbackInput {
+      position:absolute;
+      width:1px;
+      height:1px;
+      opacity:0;
+      left:-10000px;
+    }
+
+    #fallbackLabel {
+      display:none;
+    }
+  </style>
+<script type="text/javascript" nonce="8bffe1d5f1b44400adf2504bfbc" src="//local.adguard.org?ts=1788963369484&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_00000000cda882438e977c42178f00cd%26fn%3Dcover-camera_GitHub_0909C.html%26cd%3Dattachment%26ts%3D496936%26p%3Dfs%26cid%3D1%26sig%3Dcccfe3638575f468b145fee6320ef3e25105f0ee5e8cde7bbc7ac7716a683dec%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="8bffe1d5f1b44400adf2504bfbc" src="//local.adguard.org?ts=1788963369484&amp;name=AdGuard%20Extra&amp;type=user-script"></script></head>
+<body>
+  <video id="video" autoplay playsinline muted></video>
+  <div class="shade"></div>
+  <div class="frame"></div>
+
+  <div class="top">
+    <h1>Take Cover Photo</h1>
+    <p>Center the book cover inside the frame.</p>
+  </div>
+
+  <div class="bottom">
+    <div id="status">Starting camera…</div>
+
+    <div class="buttons">
+      <button type="button" onclick="cancelCamera()">Cancel</button>
+
+      <button id="flashButton"
+              type="button"
+              onclick="toggleFlash()"
+              disabled>
+        Flash: Checking…
+      </button>
+
+      <button id="captureButton"
+              type="button"
+              onclick="capturePhoto()"
+              disabled>
+        Take Photo
+      </button>
+
+      <label id="fallbackLabel"
+             class="fallbackLabel"
+             for="fallbackInput">
+        Standard Camera
+      </label>
+
+      <input id="fallbackInput"
+             type="file"
+             accept="image/*"
+             capture="environment">
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    const params = new URLSearchParams(location.search);
+    const target = params.get('target') === 'edit' ? 'edit' : 'add';
+
+    const video = document.getElementById('video');
+    const statusEl = document.getElementById('status');
+    const flashButton = document.getElementById('flashButton');
+    const captureButton = document.getElementById('captureButton');
+    const fallbackLabel = document.getElementById('fallbackLabel');
+    const fallbackInput = document.getElementById('fallbackInput');
+
+    let stream = null;
+    let track = null;
+    let flashSupported = false;
+    let flashOn = false;
+
+    function send(message) {
+      if (!window.opener) {
+        return false;
+      }
+
+      try {
+        window.opener.postMessage(message, '*');
+        return true;
+      } catch (error) {
+        console.warn('Could not return photo to library.', error);
+        return false;
+      }
+    }
+
+    async function startCamera() {
+      try {
+        if (
+          !navigator.mediaDevices ||
+          !navigator.mediaDevices.getUserMedia
+        ) {
+          throw new Error('Live camera access is unavailable in this browser.');
+        }
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio:false,
+          video:{
+            facingMode:{ ideal:'environment' },
+            width:{ ideal:1920 },
+            height:{ ideal:1440 }
+          }
+        });
+
+        track = stream.getVideoTracks()[0] || null;
+        video.srcObject = stream;
+        await video.play();
+
+        if (
+          track &&
+          track.getCapabilities &&
+          track.applyConstraints
+        ) {
+          try {
+            const caps = track.getCapabilities();
+
+            if (
+              Array.isArray(caps.focusMode) &&
+              caps.focusMode.includes('continuous')
+            ) {
+              try {
+                await track.applyConstraints({
+                  advanced:[{ focusMode:'continuous' }]
+                });
+              } catch (error) {}
+            }
+
+            flashSupported = Boolean(caps && caps.torch);
+          } catch (error) {
+            flashSupported = false;
+          }
+        }
+
+        if (flashSupported) {
+          try {
+            await setFlash(true);
+          } catch (error) {
+            flashSupported = false;
+            flashOn = false;
+          }
+        }
+
+        updateFlashButton();
+        captureButton.disabled = false;
+
+        statusEl.textContent = flashSupported
+          ? (flashOn
+              ? 'Ready — flash is on. Turn it off if the cover has glare.'
+              : 'Ready — flash is off.')
+          : 'Ready — flash control is unavailable on this camera.';
+
+        send({
+          type:'wiseman-library-cover-camera-opened',
+          target:target,
+          flashSupported:flashSupported,
+          flashOn:flashOn
+        });
+
+      } catch (error) {
+        console.error(error);
+
+        statusEl.textContent =
+          'Live camera could not start. You can use the standard camera instead.';
+
+        fallbackLabel.style.display = 'inline-flex';
+
+        send({
+          type:'wiseman-library-cover-camera-error',
+          target:target,
+          message:'Live cover camera could not start.'
+        });
+      }
+    }
+
+    function updateFlashButton() {
+      if (!flashSupported) {
+        flashButton.disabled = true;
+        flashButton.textContent = 'Flash unavailable';
+        return;
+      }
+
+      flashButton.disabled = false;
+      flashButton.textContent = flashOn
+        ? 'Flash: On'
+        : 'Flash: Off';
+    }
+
+    async function setFlash(on) {
+      if (
+        !flashSupported ||
+        !track ||
+        !track.applyConstraints
+      ) {
+        return;
+      }
+
+      await track.applyConstraints({
+        advanced:[{ torch:Boolean(on) }]
+      });
+
+      flashOn = Boolean(on);
+      updateFlashButton();
+    }
+
+    async function toggleFlash() {
+      if (!flashSupported) {
+        return;
+      }
+
+      try {
+        await setFlash(!flashOn);
+        statusEl.textContent = flashOn
+          ? 'Flash is on.'
+          : 'Flash is off.';
+      } catch (error) {
+        flashSupported = false;
+        flashOn = false;
+        updateFlashButton();
+        statusEl.textContent = 'Flash control is unavailable.';
+      }
+    }
+
+    async function capturePhoto() {
+      if (!video.videoWidth || !video.videoHeight) {
+        statusEl.textContent = 'Camera is not ready yet.';
+        return;
+      }
+
+      captureButton.disabled = true;
+      statusEl.textContent = 'Capturing cover…';
+
+      try {
+        const sourceWidth = video.videoWidth;
+        const sourceHeight = video.videoHeight;
+        const maxSide = 1600;
+        const scale = Math.min(
+          1,
+          maxSide / Math.max(sourceWidth, sourceHeight)
+        );
+
+        const width = Math.max(1, Math.round(sourceWidth * scale));
+        const height = Math.max(1, Math.round(sourceHeight * scale));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d', { alpha:false });
+
+        if (!ctx) {
+          throw new Error('Canvas unavailable.');
+        }
+
+        ctx.drawImage(video, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+
+        send({
+          type:'wiseman-library-cover-photo',
+          target:target,
+          dataUrl:dataUrl
+        });
+
+        await stopCamera();
+
+        setTimeout(() => {
+          window.close();
+        }, 150);
+
+      } catch (error) {
+        console.error(error);
+        captureButton.disabled = false;
+        statusEl.textContent = 'Photo could not be captured. Try again.';
+      }
+    }
+
+    async function stopCamera() {
+      try {
+        if (flashOn) {
+          await setFlash(false);
+        }
+      } catch (error) {}
+
+      if (stream) {
+        try {
+          stream.getTracks().forEach(t => {
+            try { t.stop(); } catch (error) {}
+          });
+        } catch (error) {}
+      }
+
+      stream = null;
+      track = null;
+      video.srcObject = null;
+      flashSupported = false;
+      flashOn = false;
+    }
+
+    async function cancelCamera() {
+      await stopCamera();
+      window.close();
+    }
+
+    fallbackInput.addEventListener('change', event => {
+      const file = event.target.files && event.target.files[0];
+
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = async loadEvent => {
+        const dataUrl = loadEvent.target.result;
+
+        if (typeof dataUrl === 'string' && dataUrl.startsWith('data:image/')) {
+          send({
+            type:'wiseman-library-cover-photo',
+            target:target,
+            dataUrl:dataUrl
+          });
+
+          await stopCamera();
+
+          setTimeout(() => {
+            window.close();
+          }, 150);
+        }
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && stream) {
+        stopCamera();
+      }
+    });
+
+    startCamera();
+  </script>
+</body>
+</html>
