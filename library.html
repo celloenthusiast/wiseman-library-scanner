@@ -285,6 +285,23 @@
       font-size:22px;
       font-weight:800;
     }
+
+    /* In-app cover camera */
+    #coverCameraOverlay { position:fixed; inset:0; z-index:120; display:none; background:#000; color:#fff; overflow:hidden; }
+    #coverCameraOverlay.show { display:block; }
+    #coverCameraVideo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#000; }
+    .coverCameraShade { position:absolute; inset:0; pointer-events:none; background:linear-gradient(to bottom,rgba(0,0,0,.52) 0,rgba(0,0,0,.10) 24%,rgba(0,0,0,.05) 72%,rgba(0,0,0,.62) 100%); }
+    .coverFrame { position:absolute; left:50%; top:50%; width:min(76vw,430px); aspect-ratio:2 / 3; transform:translate(-50%,-50%); border:3px solid rgba(255,255,255,.88); border-radius:14px; box-shadow:0 0 0 9999px rgba(0,0,0,.10); pointer-events:none; }
+    .coverCameraTop { position:absolute; left:0; right:0; top:0; padding:max(18px,env(safe-area-inset-top)) 20px 20px; text-align:center; text-shadow:0 1px 4px rgba(0,0,0,.8); }
+    .coverCameraTop h1 { margin:0; font-size:23px; }
+    .coverCameraTop p { margin:5px 0 0; font-size:14px; color:rgba(255,255,255,.88); }
+    .coverCameraBottom { position:absolute; left:0; right:0; bottom:0; padding:16px 16px max(18px,env(safe-area-inset-bottom)); background:linear-gradient(transparent,rgba(0,0,0,.78) 32%); text-align:center; }
+    #coverCameraStatus { min-height:22px; margin-bottom:12px; font-size:14px; }
+    .coverCameraButtons { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
+    .coverCameraButtons button { border:0; border-radius:12px; min-height:46px; padding:10px 16px; font:inherit; font-weight:700; background:rgba(255,255,255,.92); color:#111; }
+    .coverCameraButtons button.accent { background:#fff; color:#174c3c; }
+    .coverCameraButtons button.capture { min-width:126px; min-height:54px; font-size:17px; background:#fff; color:#111; box-shadow:0 0 0 4px rgba(255,255,255,.22); }
+    .coverCameraButtons button:disabled { opacity:.55; }
   </style>
 </head>
 
@@ -300,7 +317,7 @@
 
   <iframe
     id="appFrame"
-    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0908I"
+    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0909A"
     title="My Library"
     allow="clipboard-read; clipboard-write"
   ></iframe>
@@ -331,6 +348,24 @@
     </div>
   </div>
 
+  <div id="coverCameraOverlay" aria-hidden="true">
+    <video id="coverCameraVideo" autoplay playsinline muted></video>
+    <div class="coverCameraShade"></div>
+    <div class="coverFrame"></div>
+    <div class="coverCameraTop">
+      <h1>Take Cover Photo</h1>
+      <p>Center the book cover inside the frame.</p>
+    </div>
+    <div class="coverCameraBottom">
+      <div id="coverCameraStatus">Starting camera…</div>
+      <div class="coverCameraButtons">
+        <button type="button" onclick="closeCoverCamera()">Cancel</button>
+        <button id="coverFlashButton" class="accent" type="button" onclick="toggleCoverFlash()">Flash: On</button>
+        <button id="coverCaptureButton" class="capture" type="button" onclick="captureCoverPhoto()">Take Photo</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     'use strict';
 
@@ -341,6 +376,13 @@
     const scanSuccess = document.getElementById('scanSuccess');
     const successCode = document.getElementById('successCode');
     const torchButton = document.getElementById('torchButton');
+
+    const coverCameraOverlay = document.getElementById('coverCameraOverlay');
+    const coverCameraVideo = document.getElementById('coverCameraVideo');
+    const coverCameraStatus = document.getElementById('coverCameraStatus');
+    const coverFlashButton = document.getElementById('coverFlashButton');
+    const coverCaptureButton = document.getElementById('coverCaptureButton');
+
     let scannerInitialized = false;
     let cameraRunning = false;
     let scannerVisible = false;
@@ -349,6 +391,13 @@
     let lastCandidate = '';
     let lastCandidateAt = 0;
     let candidateHits = 0;
+
+    let coverCameraStream = null;
+    let coverCameraTrack = null;
+    let coverCameraTarget = 'add';
+    let coverFlashSupported = false;
+    let coverFlashOn = false;
+    let coverCameraVisible = false;
 
     frame.addEventListener('load', () => {
       setTimeout(() => {
@@ -366,19 +415,24 @@
     // be posted back to the correct Apps Script window.
     let libraryMessageWindow = null;
 
-    window.addEventListener('message', event => {
+    window.addEventListener('message', async event => {
       const data = event.data || {};
 
-      if (data.type !== 'wiseman-library-open-scanner') {
+      if (!event.source || event.source === window) return;
+
+      if (data.type === 'wiseman-library-open-scanner') {
+        libraryMessageWindow = event.source;
+        await closeCoverCamera();
+        openScanner();
         return;
       }
 
-      if (!event.source || event.source === window) {
-        return;
+      if (data.type === 'wiseman-library-open-cover-camera') {
+        libraryMessageWindow = event.source;
+        coverCameraTarget = data.target === 'edit' ? 'edit' : 'add';
+        await stopCameraNow();
+        openCoverCamera(coverCameraTarget);
       }
-
-      libraryMessageWindow = event.source;
-      openScanner();
     });
 
     function sendToLibrary(message) {
@@ -698,10 +752,187 @@
       }
     }
 
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden && cameraRunning) {
-        stopCameraNow();
+    async function openCoverCamera(target) {
+      coverCameraTarget = target === 'edit' ? 'edit' : 'add';
+      coverCameraVisible = true;
+      coverFlashSupported = false;
+      coverFlashOn = false;
+
+      coverCameraOverlay.classList.add('show');
+      coverCameraOverlay.setAttribute('aria-hidden','false');
+      coverCaptureButton.disabled = true;
+      coverFlashButton.disabled = true;
+      coverFlashButton.textContent = 'Flash: Checking…';
+      coverCameraStatus.textContent = 'Starting camera…';
+
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('This browser does not provide live camera access.');
+        }
+
+        coverCameraStream = await navigator.mediaDevices.getUserMedia({
+          audio:false,
+          video:{
+            facingMode:{ ideal:'environment' },
+            width:{ ideal:1920 },
+            height:{ ideal:1440 }
+          }
+        });
+
+        coverCameraTrack = coverCameraStream.getVideoTracks()[0] || null;
+        coverCameraVideo.srcObject = coverCameraStream;
+        await coverCameraVideo.play();
+
+        if (coverCameraTrack && coverCameraTrack.getCapabilities && coverCameraTrack.applyConstraints) {
+          try {
+            const caps = coverCameraTrack.getCapabilities();
+            if (Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) {
+              try { await coverCameraTrack.applyConstraints({ advanced:[{ focusMode:'continuous' }] }); } catch (error) {}
+            }
+            coverFlashSupported = Boolean(caps && caps.torch);
+          } catch (error) {
+            coverFlashSupported = false;
+          }
+        }
+
+        if (coverFlashSupported) {
+          try {
+            await setCoverFlash(true);
+          } catch (error) {
+            coverFlashSupported = false;
+            coverFlashOn = false;
+          }
+        }
+
+        updateCoverFlashButton();
+        coverCaptureButton.disabled = false;
+        coverCameraStatus.textContent = coverFlashSupported
+          ? (coverFlashOn ? 'Ready — flash is on. Turn it off if the cover has glare.' : 'Ready — flash is off.')
+          : 'Ready — flash control is not available on this camera.';
+
+        sendToLibrary({
+          type:'wiseman-library-cover-camera-opened',
+          target:coverCameraTarget,
+          flashSupported:coverFlashSupported,
+          flashOn:coverFlashOn
+        });
+      } catch (error) {
+        console.error('Cover camera error.', error);
+        coverCameraStatus.textContent = 'Camera could not start. Check camera permission for this site.';
+        sendToLibrary({
+          type:'wiseman-library-cover-camera-error',
+          target:coverCameraTarget,
+          message:'Cover camera could not start. Check camera permission for the GitHub library page.'
+        });
+        await stopCoverCameraStream();
       }
+    }
+
+    function updateCoverFlashButton() {
+      if (!coverFlashSupported) {
+        coverFlashButton.disabled = true;
+        coverFlashButton.textContent = 'Flash unavailable';
+        return;
+      }
+      coverFlashButton.disabled = false;
+      coverFlashButton.textContent = coverFlashOn ? 'Flash: On' : 'Flash: Off';
+    }
+
+    async function setCoverFlash(on) {
+      if (!coverFlashSupported || !coverCameraTrack || !coverCameraTrack.applyConstraints) return false;
+      await coverCameraTrack.applyConstraints({ advanced:[{ torch:Boolean(on) }] });
+      coverFlashOn = Boolean(on);
+      updateCoverFlashButton();
+      return true;
+    }
+
+    async function toggleCoverFlash() {
+      if (!coverFlashSupported) return;
+      try {
+        await setCoverFlash(!coverFlashOn);
+        coverCameraStatus.textContent = coverFlashOn ? 'Flash is on.' : 'Flash is off.';
+      } catch (error) {
+        console.warn('Cover flash control failed.', error);
+        coverFlashSupported = false;
+        coverFlashOn = false;
+        updateCoverFlashButton();
+        coverCameraStatus.textContent = 'Flash control is not available on this camera.';
+      }
+    }
+
+    async function captureCoverPhoto() {
+      if (!coverCameraVisible || !coverCameraVideo.videoWidth || !coverCameraVideo.videoHeight) {
+        coverCameraStatus.textContent = 'Camera is not ready yet. Try again in a moment.';
+        return;
+      }
+
+      coverCaptureButton.disabled = true;
+      coverCameraStatus.textContent = 'Capturing cover…';
+
+      try {
+        const sourceWidth = coverCameraVideo.videoWidth;
+        const sourceHeight = coverCameraVideo.videoHeight;
+        const maxSide = 1600;
+        const scale = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight));
+        const width = Math.max(1, Math.round(sourceWidth * scale));
+        const height = Math.max(1, Math.round(sourceHeight * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d', { alpha:false });
+        if (!ctx) throw new Error('Could not create photo canvas.');
+        ctx.drawImage(coverCameraVideo,0,0,width,height);
+        const dataUrl = canvas.toDataURL('image/jpeg',0.82);
+
+        sendToLibrary({
+          type:'wiseman-library-cover-photo',
+          target:coverCameraTarget,
+          dataUrl:dataUrl
+        });
+
+        coverCameraStatus.textContent = 'Photo captured.';
+        await closeCoverCamera();
+      } catch (error) {
+        console.error('Cover capture failed.', error);
+        coverCaptureButton.disabled = false;
+        coverCameraStatus.textContent = 'Photo could not be captured. Try again.';
+      }
+    }
+
+    async function stopCoverCameraStream() {
+      try {
+        if (coverFlashOn) await setCoverFlash(false);
+      } catch (error) {}
+
+      if (coverCameraStream) {
+        try {
+          coverCameraStream.getTracks().forEach(track => {
+            try { track.stop(); } catch (error) {}
+          });
+        } catch (error) {}
+      }
+
+      coverCameraStream = null;
+      coverCameraTrack = null;
+      coverCameraVideo.srcObject = null;
+      coverFlashSupported = false;
+      coverFlashOn = false;
+      updateCoverFlashButton();
+    }
+
+    async function closeCoverCamera() {
+      coverCameraVisible = false;
+      await stopCoverCameraStream();
+      coverCameraOverlay.classList.remove('show');
+      coverCameraOverlay.setAttribute('aria-hidden','true');
+      coverCaptureButton.disabled = false;
+      coverCameraStatus.textContent = 'Starting camera…';
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) return;
+      if (cameraRunning) stopCameraNow();
+      if (coverCameraVisible || coverCameraStream) closeCoverCamera();
     });
   </script>
 </body>
