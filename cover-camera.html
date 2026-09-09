@@ -35,10 +35,9 @@
       pointer-events:none;
       background:
         linear-gradient(to bottom,
-          rgba(0,0,0,.55) 0,
-          rgba(0,0,0,.10) 24%,
-          rgba(0,0,0,.05) 72%,
-          rgba(0,0,0,.68) 100%);
+          rgba(0,0,0,.42) 0,
+          rgba(0,0,0,0) 18%,
+          rgba(0,0,0,0) 100%);
     }
 
     .frame {
@@ -76,47 +75,104 @@
 
     .bottom {
       position:fixed;
-      left:0;
-      right:0;
-      bottom:0;
-      padding:18px 14px max(18px,env(safe-area-inset-bottom));
-      background:linear-gradient(transparent,rgba(0,0,0,.82) 30%);
-      text-align:center;
+      inset:0;
+      pointer-events:none;
+      background:none;
     }
 
     #status {
+      position:absolute;
+      left:50%;
+      bottom:max(14px,env(safe-area-inset-bottom));
+      transform:translateX(-50%);
+      max-width:min(70vw,520px);
       min-height:22px;
-      margin-bottom:12px;
-      font-size:14px;
+      padding:5px 9px;
+      border-radius:8px;
+      font-size:13px;
+      text-align:center;
+      color:#fff;
+      text-shadow:0 1px 4px rgba(0,0,0,.9);
+      pointer-events:none;
     }
 
     .buttons {
+      position:absolute;
+      right:max(12px,env(safe-area-inset-right));
+      top:50%;
+      transform:translateY(-50%);
       display:flex;
-      justify-content:center;
-      gap:10px;
-      flex-wrap:wrap;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+      pointer-events:auto;
     }
 
     button, .fallbackLabel {
       border:0;
-      border-radius:12px;
-      min-height:48px;
-      padding:11px 16px;
+      width:78px;
+      height:78px;
+      min-width:78px;
+      min-height:78px;
+      padding:8px;
+      border-radius:50%;
       font:inherit;
-      font-weight:700;
+      font-size:12px;
+      line-height:1.15;
+      font-weight:750;
+      text-align:center;
       background:rgba(255,255,255,.94);
       color:#111;
       display:inline-flex;
       align-items:center;
       justify-content:center;
       text-decoration:none;
+      box-shadow:0 2px 10px rgba(0,0,0,.24);
     }
 
     #captureButton {
-      min-width:132px;
-      min-height:56px;
-      font-size:17px;
-      box-shadow:0 0 0 4px rgba(255,255,255,.2);
+      width:84px;
+      height:84px;
+      min-width:84px;
+      min-height:84px;
+      font-size:13px;
+      box-shadow:
+        0 0 0 3px rgba(255,255,255,.24),
+        0 2px 10px rgba(0,0,0,.28);
+    }
+
+    @media (max-width:600px) {
+      .frame {
+        left:44%;
+        width:min(64vw,430px);
+      }
+
+      .buttons {
+        right:max(7px,env(safe-area-inset-right));
+        gap:9px;
+      }
+
+      button, .fallbackLabel {
+        width:64px;
+        height:64px;
+        min-width:64px;
+        min-height:64px;
+        font-size:10.5px;
+        padding:6px;
+      }
+
+      #captureButton {
+        width:70px;
+        height:70px;
+        min-width:70px;
+        min-height:70px;
+        font-size:11px;
+      }
+
+      #status {
+        max-width:72vw;
+        font-size:12px;
+      }
     }
 
     button:disabled {
@@ -135,7 +191,7 @@
       display:none;
     }
   </style>
-<script type="text/javascript" nonce="8bffe1d5f1b44400adf2504bfbc" src="//local.adguard.org?ts=1788963369484&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000006d7c81f58da3f03f52b64dd3%26fn%3Dcover-camera.html%26cd%3Dattachment%26ts%3D496937%26p%3Dfs%26cid%3D1%26sig%3D078819d2a1221f678417766d6e2448443786197187e05d4816d6d1165da28340%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="8bffe1d5f1b44400adf2504bfbc" src="//local.adguard.org?ts=1788963369484&amp;name=AdGuard%20Extra&amp;type=user-script"></script></head>
+<script type="text/javascript" nonce="8bffe1d5f1b44400adf2504bfbc" src="//local.adguard.org?ts=1788963369484&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000009b8c81f58db4b174ac325ed9%26fn%3Dcover-camera_0909E.html%26cd%3Dattachment%26ts%3D496937%26p%3Dfs%26cid%3D1%26sig%3Dac43769ee810897edae76195c20061b3963ae98cbadc54772f6a79e71b29f2d9%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="8bffe1d5f1b44400adf2504bfbc" src="//local.adguard.org?ts=1788963369484&amp;name=AdGuard%20Extra&amp;type=user-script"></script></head>
 <body>
   <video id="video" autoplay playsinline muted></video>
   <div class="shade"></div>
@@ -143,7 +199,6 @@
 
   <div class="top">
     <h1>Take Cover Photo</h1>
-    <p>Fill the white frame with the book cover. Only the framed area will be saved.</p>
   </div>
 
   <div class="bottom">
