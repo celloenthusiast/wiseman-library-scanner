@@ -6,13 +6,16 @@
 
   <title>My Library</title>
 
-  <link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
+  <script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790254026902&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000000c6c820c88e3d8c3d67ccc77%26fn%3Dlibrary_0917J_WebShare.html%26cd%3Dattachment%26ts%3D497294%26p%3Dfs%26cid%3D1%26sig%3Dfcbf5215ce5472db6be8742f42147cdcad543cd4d9f6869706178e9ac87cf239%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790254026902&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <link rel="apple-touch-icon" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="My Library">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#ffffff">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 
   <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.12.1/dist/quagga.min.js"></script>
 
@@ -97,18 +100,55 @@
       color:var(--muted);
     }
 
-    .spinner {
-      width:24px;
-      height:24px;
+    .bookPageLoader {
+      position:relative;
+      width:34px;
+      height:25px;
       margin:18px auto 0;
-      border:3px solid #dce5e1;
-      border-top-color:var(--accent);
-      border-radius:50%;
-      animation:spin .8s linear infinite;
+      perspective:75px;
     }
 
-    @keyframes spin {
-      to { transform:rotate(360deg); }
+    .bookPageLoader::before,
+    .bookPageLoader::after {
+      content:'';
+      position:absolute;
+      top:3px;
+      width:16px;
+      height:19px;
+      border:2px solid var(--accent);
+      background:#fff;
+      box-sizing:border-box;
+    }
+
+    .bookPageLoader::before {
+      left:1px;
+      border-radius:4px 1px 1px 4px;
+      transform-origin:right center;
+    }
+
+    .bookPageLoader::after {
+      right:1px;
+      border-radius:1px 4px 4px 1px;
+      transform-origin:left center;
+      animation:bookPageFlip .85s ease-in-out infinite;
+    }
+
+    .bookPageLoader span {
+      position:absolute;
+      left:50%;
+      top:3px;
+      width:2px;
+      height:19px;
+      margin-left:-1px;
+      background:var(--accent);
+      border-radius:2px;
+      z-index:3;
+    }
+
+    @keyframes bookPageFlip {
+      0%,18% { transform:rotateY(0deg); }
+      50%,68% { transform:rotateY(-155deg); }
+      100% { transform:rotateY(-180deg); }
     }
 
     /* Built-in scanner */
@@ -311,15 +351,15 @@
       <img class="loadingIcon" src="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png" alt="">
       <div class="loadingTitle">My Library</div>
       <div class="loadingText">Opening library…</div>
-      <div class="spinner" aria-hidden="true"></div>
+      <div class="bookPageLoader" aria-hidden="true"><span></span></div>
     </div>
   </div>
 
   <iframe
     id="appFrame"
-    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0909A"
+    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0917J"
     title="My Library"
-    allow="clipboard-read; clipboard-write"
+    allow="camera; web-share; clipboard-read; clipboard-write"
   ></iframe>
   <div id="scannerOverlay" aria-hidden="true">
     <div id="scannerViewport"></div>
@@ -419,6 +459,28 @@
       const data = event.data || {};
 
       if (!event.source || event.source === window) return;
+
+      if (data.type === 'wiseman-library-cover-camera-capabilities-request') {
+        libraryMessageWindow = event.source;
+
+        try {
+          event.source.postMessage(
+            {
+              type:'wiseman-library-cover-camera-capabilities',
+              supported:Boolean(
+                navigator.mediaDevices &&
+                navigator.mediaDevices.getUserMedia
+              ),
+              version:'0909B'
+            },
+            '*'
+          );
+        } catch (error) {
+          console.warn('Could not return cover-camera capabilities.', error);
+        }
+
+        return;
+      }
 
       if (data.type === 'wiseman-library-open-scanner') {
         libraryMessageWindow = event.source;
