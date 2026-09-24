@@ -6,7 +6,7 @@
 
   <title>My Library</title>
 
-  <script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790261148194&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000009590821088d6defb9659cf7e%26fn%3Dlibrary_0917L_WhiteScreenHotfix.html%26cd%3Dattachment%26ts%3D497295%26p%3Dfs%26cid%3D1%26sig%3Db47e1b90ccfd8683ee53c5c2f5228d1131957ebcbd6de6fd07176e0c9ee1cc2d%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790261148194&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
+  <script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790264748277&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_00000000f9048211b5ccfcd50511fa11%26fn%3Dlibrary_0917N_StableRecovery.html%26cd%3Dattachment%26ts%3D497295%26p%3Dfs%26cid%3D1%26sig%3D0ecbf05f4370afd9c19dd1127a307443753dff6d9575e47c1ac61320a65c74a3%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790264748277&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <link rel="apple-touch-icon" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -100,143 +100,61 @@
       color:var(--muted);
     }
 
-    .loadingRetry {
-      display:none;
-      margin:14px auto 0;
-      min-height:40px;
-      padding:8px 14px;
-      border:0;
-      border-radius:10px;
-      background:var(--accent);
-      color:#fff;
-      font:inherit;
-      font-weight:700;
-    }
-
-    .loadingRetry.visible {
-      display:block;
-    }
-
     .bookPageLoader {
-      --book-w:48px;
-      --book-h:35px;
-      --page-w:23px;
       position:relative;
-      width:var(--book-w);
-      height:var(--book-h);
+      display:inline-block;
+      width:42px;
+      height:30px;
       margin:18px auto 0;
-      perspective:145px;
-      transform-style:preserve-3d;
+      animation:bookLoaderPulse 1.8s ease-in-out infinite;
     }
 
     .bookPageLoader::before,
-    .bookPageLoader::after,
-    .bookPageLoader > span,
-    .bookPageLoader > span::before,
-    .bookPageLoader > span::after {
+    .bookPageLoader::after {
+      content:'';
       position:absolute;
-      top:1px;
-      left:50%;
-      width:var(--page-w);
-      height:calc(var(--book-h) - 2px);
+      top:3px;
+      width:19px;
+      height:23px;
       box-sizing:border-box;
-      transform-origin:left center;
-      transform:rotateY(0deg);
-      backface-visibility:visible;
+      border:2px solid var(--accent);
+      background:#fffdf6;
     }
 
     .bookPageLoader::before {
-      content:'';
-      z-index:1;
-      border:2px solid var(--accent);
-      border-radius:1px 5px 5px 1px;
-      background:var(--accent);
-      box-shadow:inset 2px 0 0 rgba(255,255,255,.14);
-      animation:loaderBackCover 4.2s ease-in-out infinite;
+      left:2px;
+      border-radius:5px 1px 2px 5px;
+      transform:skewY(-5deg);
+      transform-origin:right center;
     }
 
     .bookPageLoader::after {
-      content:'';
-      z-index:5;
-      border:2px solid var(--accent);
-      border-radius:1px 5px 5px 1px;
-      background:
-        linear-gradient(90deg, rgba(255,255,255,.10), transparent 28%),
-        var(--accent);
-      box-shadow:
-        inset 2px 0 0 rgba(255,255,255,.16),
-        1px 1px 3px rgba(0,0,0,.16);
-      animation:loaderFrontCover 4.2s ease-in-out infinite;
+      right:2px;
+      border-radius:1px 5px 5px 2px;
+      transform:skewY(5deg);
+      transform-origin:left center;
     }
 
     .bookPageLoader > span {
+      position:absolute;
+      left:50%;
+      top:3px;
+      width:2px;
+      height:23px;
+      margin-left:-1px;
+      background:var(--accent);
+      border-radius:2px;
       z-index:3;
-      display:block;
-      border:1px solid #d5c8a8;
-      border-left:2px solid #b7a77f;
-      border-radius:1px 5px 5px 1px;
-      background:#fffdf5;
-      box-shadow:inset 3px 0 5px rgba(120,95,55,.08);
-      animation:loaderPage2 4.2s ease-in-out infinite;
     }
 
-    .bookPageLoader > span::before,
-    .bookPageLoader > span::after {
-      content:'';
-      top:-1px;
-      left:0;
-      width:100%;
-      height:100%;
-      border:1px solid #d9ceb2;
-      border-left:2px solid #b7a77f;
-      border-radius:1px 5px 5px 1px;
-      background:#fffdf7;
-      box-shadow:inset 3px 0 5px rgba(120,95,55,.06);
-    }
-
-    .bookPageLoader > span::before {
-      z-index:4;
-      animation:loaderPage1 4.2s ease-in-out infinite;
-    }
-
-    .bookPageLoader > span::after {
-      z-index:2;
-      background:#fbf6e8;
-      animation:loaderPage3 4.2s ease-in-out infinite;
-    }
-
-    @keyframes loaderFrontCover {
-      0%, 10% { transform:rotateY(0deg); }
-      24%, 100% { transform:rotateY(-180deg); }
-    }
-
-    @keyframes loaderPage1 {
-      0%, 27% { transform:rotateY(0deg); }
-      41%, 100% { transform:rotateY(-180deg); }
-    }
-
-    @keyframes loaderPage2 {
-      0%, 44% { transform:rotateY(0deg); }
-      58%, 100% { transform:rotateY(-180deg); }
-    }
-
-    @keyframes loaderPage3 {
-      0%, 61% { transform:rotateY(0deg); }
-      75%, 100% { transform:rotateY(-180deg); }
-    }
-
-    @keyframes loaderBackCover {
-      0%, 77% {
-        transform:rotateY(0deg);
-        z-index:1;
+    @keyframes bookLoaderPulse {
+      0%,100% {
+        transform:translateY(0) scale(1);
+        opacity:.78;
       }
-      78% {
-        transform:rotateY(0deg);
-        z-index:6;
-      }
-      92%, 100% {
-        transform:rotateY(-180deg);
-        z-index:6;
+      50% {
+        transform:translateY(-1px) scale(1.04);
+        opacity:1;
       }
     }
 
@@ -439,15 +357,14 @@
     <div class="loadingInner">
       <img class="loadingIcon" src="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png" alt="">
       <div class="loadingTitle">My Library</div>
-      <div id="loadingText" class="loadingText">Opening library…</div>
+      <div class="loadingText">Opening library…</div>
       <div class="bookPageLoader" aria-hidden="true"><span></span></div>
-      <button id="loadingRetry" class="loadingRetry" type="button" onclick="location.reload()">Reload Library</button>
     </div>
   </div>
 
   <iframe
     id="appFrame"
-    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0917L"
+    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0917N"
     title="My Library"
     allow="camera; clipboard-read; clipboard-write"
   ></iframe>
@@ -501,8 +418,6 @@
 
     const frame = document.getElementById('appFrame');
     const loading = document.getElementById('loading');
-    const loadingText = document.getElementById('loadingText');
-    const loadingRetry = document.getElementById('loadingRetry');
     const scannerOverlay = document.getElementById('scannerOverlay');
     const scannerStatus = document.getElementById('scannerStatus');
     const scanSuccess = document.getElementById('scanSuccess');
@@ -531,28 +446,15 @@
     let coverFlashOn = false;
     let coverCameraVisible = false;
 
-    let appReportedReady = false;
-
     frame.addEventListener('load', () => {
-      // The iframe load event may fire before the nested Apps Script UI is
-      // actually ready. Keep the loader until the app explicitly reports ready.
-      if (loadingText && !appReportedReady) {
-        loadingText.textContent = 'Opening library…';
-      }
+      setTimeout(() => {
+        loading.classList.add('hidden');
+      }, 250);
     });
 
     setTimeout(() => {
-      if (appReportedReady) return;
-
-      if (loadingText) {
-        loadingText.textContent =
-          'The library is taking longer than expected to open.';
-      }
-
-      if (loadingRetry) {
-        loadingRetry.classList.add('visible');
-      }
-    }, 12000);
+      loading.classList.add('hidden');
+    }, 8000);
 
     // Apps Script's visible page is nested inside Google's sandbox iframe.
     // The message therefore comes from that inner window, not directly from
@@ -564,104 +466,6 @@
       const data = event.data || {};
 
       if (!event.source || event.source === window) return;
-
-      if (data.type === 'wiseman-library-app-ready') {
-        appReportedReady = true;
-
-        if (loadingRetry) {
-          loadingRetry.classList.remove('visible');
-        }
-
-        setTimeout(() => {
-          loading.classList.add('hidden');
-        }, 120);
-
-        return;
-      }
-
-      if (data.type === 'wiseman-library-app-error') {
-        appReportedReady = false;
-
-        if (loadingText) {
-          loadingText.textContent =
-            'The library could not finish starting: ' +
-            String(data.message || 'Unknown error');
-        }
-
-        if (loadingRetry) {
-          loadingRetry.classList.add('visible');
-        }
-
-        return;
-      }
-
-      if (data.type === 'wiseman-library-share') {
-        libraryMessageWindow = event.source;
-
-        const requestId =
-          String(data.requestId || '');
-
-        const shareData = {
-          title:String(data.title || 'Book Quote'),
-          text:String(data.text || '')
-        };
-
-        let status = 'failed';
-        let errorName = '';
-
-        try {
-          if (!navigator.share) {
-            throw new Error('Web Share API unavailable');
-          }
-
-          if (
-            navigator.canShare &&
-            !navigator.canShare(shareData)
-          ) {
-            throw new Error('Share data is not supported');
-          }
-
-          await navigator.share(shareData);
-          status = 'shared';
-
-        } catch (error) {
-          errorName =
-            error && error.name
-              ? error.name
-              : '';
-
-          status =
-            errorName === 'AbortError'
-              ? 'cancelled'
-              : 'failed';
-
-          if (status === 'failed') {
-            console.warn(
-              'Top-level native sharing failed.',
-              error
-            );
-          }
-        }
-
-        try {
-          event.source.postMessage(
-            {
-              type:'wiseman-library-share-result',
-              requestId:requestId,
-              status:status,
-              errorName:errorName
-            },
-            '*'
-          );
-        } catch (error) {
-          console.warn(
-            'Could not return share result.',
-            error
-          );
-        }
-
-        return;
-      }
 
       if (data.type === 'wiseman-library-cover-camera-capabilities-request') {
         libraryMessageWindow = event.source;
