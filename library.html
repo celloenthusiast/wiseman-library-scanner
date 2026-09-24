@@ -6,7 +6,7 @@
 
   <title>My Library</title>
 
-  <script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790261148194&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000007e50821188e0b9eefbb0f351%26fn%3Dlibrary_0917K_LoaderShareFix.html%26cd%3Dattachment%26ts%3D497295%26p%3Dfs%26cid%3D1%26sig%3Da6a76bbc5170d51210e0bd48abcd1501f1ec101bfc05a53600d3c068737db5e3%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790261148194&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
+  <script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790261148194&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000009590821088d6defb9659cf7e%26fn%3Dlibrary_0917L_WhiteScreenHotfix.html%26cd%3Dattachment%26ts%3D497295%26p%3Dfs%26cid%3D1%26sig%3Db47e1b90ccfd8683ee53c5c2f5228d1131957ebcbd6de6fd07176e0c9ee1cc2d%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790261148194&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <link rel="apple-touch-icon" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -98,6 +98,23 @@
       margin-top:5px;
       font-size:14px;
       color:var(--muted);
+    }
+
+    .loadingRetry {
+      display:none;
+      margin:14px auto 0;
+      min-height:40px;
+      padding:8px 14px;
+      border:0;
+      border-radius:10px;
+      background:var(--accent);
+      color:#fff;
+      font:inherit;
+      font-weight:700;
+    }
+
+    .loadingRetry.visible {
+      display:block;
     }
 
     .bookPageLoader {
@@ -422,16 +439,17 @@
     <div class="loadingInner">
       <img class="loadingIcon" src="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png" alt="">
       <div class="loadingTitle">My Library</div>
-      <div class="loadingText">Opening library…</div>
+      <div id="loadingText" class="loadingText">Opening library…</div>
       <div class="bookPageLoader" aria-hidden="true"><span></span></div>
+      <button id="loadingRetry" class="loadingRetry" type="button" onclick="location.reload()">Reload Library</button>
     </div>
   </div>
 
   <iframe
     id="appFrame"
-    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0917K"
+    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0917L"
     title="My Library"
-    allow="camera; web-share; clipboard-read; clipboard-write"
+    allow="camera; clipboard-read; clipboard-write"
   ></iframe>
   <div id="scannerOverlay" aria-hidden="true">
     <div id="scannerViewport"></div>
@@ -483,6 +501,8 @@
 
     const frame = document.getElementById('appFrame');
     const loading = document.getElementById('loading');
+    const loadingText = document.getElementById('loadingText');
+    const loadingRetry = document.getElementById('loadingRetry');
     const scannerOverlay = document.getElementById('scannerOverlay');
     const scannerStatus = document.getElementById('scannerStatus');
     const scanSuccess = document.getElementById('scanSuccess');
@@ -511,15 +531,28 @@
     let coverFlashOn = false;
     let coverCameraVisible = false;
 
+    let appReportedReady = false;
+
     frame.addEventListener('load', () => {
-      setTimeout(() => {
-        loading.classList.add('hidden');
-      }, 250);
+      // The iframe load event may fire before the nested Apps Script UI is
+      // actually ready. Keep the loader until the app explicitly reports ready.
+      if (loadingText && !appReportedReady) {
+        loadingText.textContent = 'Opening library…';
+      }
     });
 
     setTimeout(() => {
-      loading.classList.add('hidden');
-    }, 8000);
+      if (appReportedReady) return;
+
+      if (loadingText) {
+        loadingText.textContent =
+          'The library is taking longer than expected to open.';
+      }
+
+      if (loadingRetry) {
+        loadingRetry.classList.add('visible');
+      }
+    }, 12000);
 
     // Apps Script's visible page is nested inside Google's sandbox iframe.
     // The message therefore comes from that inner window, not directly from
@@ -531,6 +564,36 @@
       const data = event.data || {};
 
       if (!event.source || event.source === window) return;
+
+      if (data.type === 'wiseman-library-app-ready') {
+        appReportedReady = true;
+
+        if (loadingRetry) {
+          loadingRetry.classList.remove('visible');
+        }
+
+        setTimeout(() => {
+          loading.classList.add('hidden');
+        }, 120);
+
+        return;
+      }
+
+      if (data.type === 'wiseman-library-app-error') {
+        appReportedReady = false;
+
+        if (loadingText) {
+          loadingText.textContent =
+            'The library could not finish starting: ' +
+            String(data.message || 'Unknown error');
+        }
+
+        if (loadingRetry) {
+          loadingRetry.classList.add('visible');
+        }
+
+        return;
+      }
 
       if (data.type === 'wiseman-library-share') {
         libraryMessageWindow = event.source;
