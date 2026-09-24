@@ -6,7 +6,7 @@
 
   <title>My Library</title>
 
-  <script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790264748277&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_00000000f9048211b5ccfcd50511fa11%26fn%3Dlibrary_0917N_StableRecovery.html%26cd%3Dattachment%26ts%3D497295%26p%3Dfs%26cid%3D1%26sig%3D0ecbf05f4370afd9c19dd1127a307443753dff6d9575e47c1ac61320a65c74a3%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790264748277&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
+  <script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790264748277&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_00000000501c81f4abbb46d430f32b17%26fn%3Dlibrary_0917P_FullCleanBuild.html%26cd%3Dattachment%26ts%3D497296%26p%3Dfs%26cid%3D1%26sig%3Da5c0fb8a138963060fb61ec76b02e4081d05329fef9c916faed01824ea1b0a4e%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790264748277&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <link rel="apple-touch-icon" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -101,60 +101,186 @@
     }
 
     .bookPageLoader {
+      --book-w:58px;
+      --book-h:38px;
+      --page-w:29px;
+      --cycle:6.4s;
       position:relative;
       display:inline-block;
-      width:42px;
-      height:30px;
+      width:var(--book-w);
+      height:var(--book-h);
+      vertical-align:middle;
       margin:18px auto 0;
-      animation:bookLoaderPulse 1.8s ease-in-out infinite;
-    }
-
-    .bookPageLoader::before,
-    .bookPageLoader::after {
-      content:'';
-      position:absolute;
-      top:3px;
-      width:19px;
-      height:23px;
-      box-sizing:border-box;
-      border:2px solid var(--accent);
-      background:#fffdf6;
+      perspective:280px;
+      perspective-origin:50% 48%;
+      transform-style:preserve-3d;
+      filter:drop-shadow(0 3px 3px rgba(25,43,35,.14));
     }
 
     .bookPageLoader::before {
-      left:2px;
-      border-radius:5px 1px 2px 5px;
-      transform:skewY(-5deg);
-      transform-origin:right center;
-    }
-
-    .bookPageLoader::after {
-      right:2px;
-      border-radius:1px 5px 5px 2px;
-      transform:skewY(5deg);
-      transform-origin:left center;
-    }
-
-    .bookPageLoader > span {
+      content:"";
       position:absolute;
       left:50%;
-      top:3px;
+      top:3%;
       width:2px;
-      height:23px;
-      margin-left:-1px;
-      background:var(--accent);
+      height:94%;
+      transform:translateX(-1px) translateZ(2px);
+      background:linear-gradient(#d7bd82,#c6a96a,#9f8045);
       border-radius:2px;
-      z-index:3;
+      z-index:50;
+      box-shadow:0 0 2px rgba(75,55,20,.16);
     }
 
-    @keyframes bookLoaderPulse {
-      0%,100% {
-        transform:translateY(0) scale(1);
-        opacity:.78;
+    .bookPageLoader .loaderCover,
+    .bookPageLoader .loaderPage {
+      position:absolute;
+      left:50%;
+      top:0;
+      width:50%;
+      height:100%;
+      box-sizing:border-box;
+      transform-origin:0 50%;
+      transform-style:preserve-3d;
+      backface-visibility:visible;
+      will-change:transform,box-shadow,border-radius;
+    }
+
+    .bookPageLoader .loaderCover {
+      background:
+        linear-gradient(90deg,rgba(255,255,255,.10),transparent 22%),
+        #2b463a;
+      border:1.5px solid #1f352b;
+      border-left-width:1px;
+      border-radius:1px 5px 5px 1px;
+      box-shadow:
+        inset 2px 0 0 rgba(255,255,255,.08),
+        inset -1px 0 0 rgba(0,0,0,.08),
+        1px 1px 2px rgba(0,0,0,.12);
+    }
+
+    .bookPageLoader .loaderCover::after {
+      content:"";
+      position:absolute;
+      inset:15% 13%;
+      border:1px solid rgba(198,169,106,.70);
+      border-radius:2px;
+    }
+
+    .bookPageLoader .loaderFront {
+      z-index:30;
+      animation:loaderFrontCover var(--cycle) cubic-bezier(.55,.04,.22,1) infinite;
+    }
+
+    .bookPageLoader .loaderBack {
+      z-index:1;
+      animation:loaderBackCover var(--cycle) cubic-bezier(.58,.04,.20,1) infinite;
+    }
+
+    .bookPageLoader .loaderPage {
+      border:1px solid #d8cdb2;
+      border-left:1px solid #b9aa86;
+      border-radius:1px 5px 5px 1px;
+      background:
+        linear-gradient(90deg,#ece2cc 0,#fffdf3 10%,#fffdf3 79%,#f0e5ce 100%);
+      box-shadow:
+        inset 2px 0 4px rgba(95,72,35,.08),
+        1px 1px 2px rgba(0,0,0,.06);
+    }
+
+    .bookPageLoader .lp1{z-index:24;animation:loaderP1 var(--cycle) linear infinite}
+    .bookPageLoader .lp2{z-index:23;animation:loaderP2 var(--cycle) linear infinite}
+    .bookPageLoader .lp3{z-index:22;animation:loaderP3 var(--cycle) linear infinite}
+    .bookPageLoader .lp4{z-index:21;animation:loaderP4 var(--cycle) linear infinite}
+    .bookPageLoader .lp5{z-index:20;animation:loaderP5 var(--cycle) linear infinite}
+    .bookPageLoader .lp6{z-index:19;animation:loaderP6 var(--cycle) linear infinite}
+
+    @keyframes loaderFrontCover {
+      0%,8% {
+        transform:rotateY(0deg) translateZ(2px);
+        z-index:30;
       }
-      50% {
-        transform:translateY(-1px) scale(1.04);
-        opacity:1;
+      14% {
+        transform:rotateY(-42deg) translateZ(3px);
+        box-shadow:5px 1px 7px rgba(0,0,0,.16);
+        z-index:35;
+      }
+      18% {
+        transform:rotateY(-96deg) translateZ(5px) scaleX(.90);
+        box-shadow:7px 1px 9px rgba(0,0,0,.20);
+        z-index:35;
+      }
+      23%,100% {
+        transform:rotateY(-179deg) translateZ(1px);
+        z-index:2;
+      }
+    }
+
+    @keyframes loaderP1 {
+      0%,25%{transform:rotateY(0) translateZ(1px);z-index:24}
+      29%{transform:rotateY(-38deg) translateZ(3px) skewY(-2deg) scaleX(.96);z-index:40}
+      33%{transform:rotateY(-82deg) translateZ(5px) skewY(-5deg) scaleX(.78);z-index:40;box-shadow:7px 1px 9px rgba(0,0,0,.15)}
+      36%{transform:rotateY(-118deg) translateZ(4px) skewY(-3deg) scaleX(.84);z-index:40}
+      40%,100%{transform:rotateY(-179deg) translateZ(1px);z-index:3}
+    }
+
+    @keyframes loaderP2 {
+      0%,35%{transform:rotateY(0) translateZ(1px);z-index:23}
+      39%{transform:rotateY(-36deg) translateZ(3px) skewY(-2deg) scaleX(.96);z-index:40}
+      43%{transform:rotateY(-84deg) translateZ(5px) skewY(-5deg) scaleX(.78);z-index:40;box-shadow:7px 1px 9px rgba(0,0,0,.15)}
+      46%{transform:rotateY(-120deg) translateZ(4px) skewY(-3deg) scaleX(.84);z-index:40}
+      50%,100%{transform:rotateY(-179deg) translateZ(1px);z-index:4}
+    }
+
+    @keyframes loaderP3 {
+      0%,45%{transform:rotateY(0) translateZ(1px);z-index:22}
+      49%{transform:rotateY(-39deg) translateZ(3px) skewY(-2deg) scaleX(.96);z-index:40}
+      53%{transform:rotateY(-86deg) translateZ(5px) skewY(-5deg) scaleX(.77);z-index:40;box-shadow:7px 1px 9px rgba(0,0,0,.15)}
+      56%{transform:rotateY(-121deg) translateZ(4px) skewY(-3deg) scaleX(.84);z-index:40}
+      60%,100%{transform:rotateY(-179deg) translateZ(1px);z-index:5}
+    }
+
+    @keyframes loaderP4 {
+      0%,55%{transform:rotateY(0) translateZ(1px);z-index:21}
+      59%{transform:rotateY(-37deg) translateZ(3px) skewY(-2deg) scaleX(.96);z-index:40}
+      63%{transform:rotateY(-85deg) translateZ(5px) skewY(-5deg) scaleX(.77);z-index:40;box-shadow:7px 1px 9px rgba(0,0,0,.15)}
+      66%{transform:rotateY(-119deg) translateZ(4px) skewY(-3deg) scaleX(.84);z-index:40}
+      70%,100%{transform:rotateY(-179deg) translateZ(1px);z-index:6}
+    }
+
+    @keyframes loaderP5 {
+      0%,65%{transform:rotateY(0) translateZ(1px);z-index:20}
+      69%{transform:rotateY(-38deg) translateZ(3px) skewY(-2deg) scaleX(.96);z-index:40}
+      73%{transform:rotateY(-84deg) translateZ(5px) skewY(-5deg) scaleX(.78);z-index:40;box-shadow:7px 1px 9px rgba(0,0,0,.15)}
+      76%{transform:rotateY(-118deg) translateZ(4px) skewY(-3deg) scaleX(.84);z-index:40}
+      80%,100%{transform:rotateY(-179deg) translateZ(1px);z-index:7}
+    }
+
+    @keyframes loaderP6 {
+      0%,73%{transform:rotateY(0) translateZ(1px);z-index:19}
+      77%{transform:rotateY(-36deg) translateZ(3px) skewY(-2deg) scaleX(.96);z-index:40}
+      81%{transform:rotateY(-84deg) translateZ(5px) skewY(-5deg) scaleX(.78);z-index:40;box-shadow:7px 1px 9px rgba(0,0,0,.15)}
+      84%{transform:rotateY(-120deg) translateZ(4px) skewY(-3deg) scaleX(.84);z-index:40}
+      87%,100%{transform:rotateY(-179deg) translateZ(1px);z-index:8}
+    }
+
+    @keyframes loaderBackCover {
+      0%,87% {
+        transform:rotateY(0deg) translateZ(0);
+        z-index:1;
+      }
+      88% { z-index:45; }
+      91% {
+        transform:rotateY(-42deg) translateZ(3px);
+        z-index:45;
+      }
+      94% {
+        transform:rotateY(-96deg) translateZ(5px);
+        z-index:45;
+        box-shadow:7px 1px 9px rgba(0,0,0,.20);
+      }
+      97%,100% {
+        transform:rotateY(-179deg) translateZ(1px);
+        z-index:45;
       }
     }
 
@@ -358,13 +484,13 @@
       <img class="loadingIcon" src="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png" alt="">
       <div class="loadingTitle">My Library</div>
       <div class="loadingText">Opening library…</div>
-      <div class="bookPageLoader" aria-hidden="true"><span></span></div>
+      <div class="bookPageLoader" aria-hidden="true"><span class="loaderCover loaderBack"></span><span class="loaderPage lp6"></span><span class="loaderPage lp5"></span><span class="loaderPage lp4"></span><span class="loaderPage lp3"></span><span class="loaderPage lp2"></span><span class="loaderPage lp1"></span><span class="loaderCover loaderFront"></span></div>
     </div>
   </div>
 
   <iframe
     id="appFrame"
-    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0917N"
+    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0917P"
     title="My Library"
     allow="camera; clipboard-read; clipboard-write"
   ></iframe>
