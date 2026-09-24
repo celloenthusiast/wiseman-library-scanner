@@ -6,7 +6,7 @@
 
   <title>My Library</title>
 
-  <script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790254026902&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000000c6c820c88e3d8c3d67ccc77%26fn%3Dlibrary_0917J_WebShare.html%26cd%3Dattachment%26ts%3D497294%26p%3Dfs%26cid%3D1%26sig%3Dfcbf5215ce5472db6be8742f42147cdcad543cd4d9f6869706178e9ac87cf239%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790254026902&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
+  <script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790261148194&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000007e50821188e0b9eefbb0f351%26fn%3Dlibrary_0917K_LoaderShareFix.html%26cd%3Dattachment%26ts%3D497295%26p%3Dfs%26cid%3D1%26sig%3Da6a76bbc5170d51210e0bd48abcd1501f1ec101bfc05a53600d3c068737db5e3%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790261148194&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <link rel="apple-touch-icon" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -101,54 +101,126 @@
     }
 
     .bookPageLoader {
+      --book-w:48px;
+      --book-h:35px;
+      --page-w:23px;
       position:relative;
-      width:34px;
-      height:25px;
+      width:var(--book-w);
+      height:var(--book-h);
       margin:18px auto 0;
-      perspective:75px;
+      perspective:145px;
+      transform-style:preserve-3d;
     }
 
     .bookPageLoader::before,
-    .bookPageLoader::after {
-      content:'';
+    .bookPageLoader::after,
+    .bookPageLoader > span,
+    .bookPageLoader > span::before,
+    .bookPageLoader > span::after {
       position:absolute;
-      top:3px;
-      width:16px;
-      height:19px;
-      border:2px solid var(--accent);
-      background:#fff;
+      top:1px;
+      left:50%;
+      width:var(--page-w);
+      height:calc(var(--book-h) - 2px);
       box-sizing:border-box;
+      transform-origin:left center;
+      transform:rotateY(0deg);
+      backface-visibility:visible;
     }
 
     .bookPageLoader::before {
-      left:1px;
-      border-radius:4px 1px 1px 4px;
-      transform-origin:right center;
+      content:'';
+      z-index:1;
+      border:2px solid var(--accent);
+      border-radius:1px 5px 5px 1px;
+      background:var(--accent);
+      box-shadow:inset 2px 0 0 rgba(255,255,255,.14);
+      animation:loaderBackCover 4.2s ease-in-out infinite;
     }
 
     .bookPageLoader::after {
-      right:1px;
-      border-radius:1px 4px 4px 1px;
-      transform-origin:left center;
-      animation:bookPageFlip .85s ease-in-out infinite;
+      content:'';
+      z-index:5;
+      border:2px solid var(--accent);
+      border-radius:1px 5px 5px 1px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.10), transparent 28%),
+        var(--accent);
+      box-shadow:
+        inset 2px 0 0 rgba(255,255,255,.16),
+        1px 1px 3px rgba(0,0,0,.16);
+      animation:loaderFrontCover 4.2s ease-in-out infinite;
     }
 
-    .bookPageLoader span {
-      position:absolute;
-      left:50%;
-      top:3px;
-      width:2px;
-      height:19px;
-      margin-left:-1px;
-      background:var(--accent);
-      border-radius:2px;
+    .bookPageLoader > span {
       z-index:3;
+      display:block;
+      border:1px solid #d5c8a8;
+      border-left:2px solid #b7a77f;
+      border-radius:1px 5px 5px 1px;
+      background:#fffdf5;
+      box-shadow:inset 3px 0 5px rgba(120,95,55,.08);
+      animation:loaderPage2 4.2s ease-in-out infinite;
     }
 
-    @keyframes bookPageFlip {
-      0%,18% { transform:rotateY(0deg); }
-      50%,68% { transform:rotateY(-155deg); }
-      100% { transform:rotateY(-180deg); }
+    .bookPageLoader > span::before,
+    .bookPageLoader > span::after {
+      content:'';
+      top:-1px;
+      left:0;
+      width:100%;
+      height:100%;
+      border:1px solid #d9ceb2;
+      border-left:2px solid #b7a77f;
+      border-radius:1px 5px 5px 1px;
+      background:#fffdf7;
+      box-shadow:inset 3px 0 5px rgba(120,95,55,.06);
+    }
+
+    .bookPageLoader > span::before {
+      z-index:4;
+      animation:loaderPage1 4.2s ease-in-out infinite;
+    }
+
+    .bookPageLoader > span::after {
+      z-index:2;
+      background:#fbf6e8;
+      animation:loaderPage3 4.2s ease-in-out infinite;
+    }
+
+    @keyframes loaderFrontCover {
+      0%, 10% { transform:rotateY(0deg); }
+      24%, 100% { transform:rotateY(-180deg); }
+    }
+
+    @keyframes loaderPage1 {
+      0%, 27% { transform:rotateY(0deg); }
+      41%, 100% { transform:rotateY(-180deg); }
+    }
+
+    @keyframes loaderPage2 {
+      0%, 44% { transform:rotateY(0deg); }
+      58%, 100% { transform:rotateY(-180deg); }
+    }
+
+    @keyframes loaderPage3 {
+      0%, 61% { transform:rotateY(0deg); }
+      75%, 100% { transform:rotateY(-180deg); }
+    }
+
+    @keyframes loaderBackCover {
+      0%, 77% {
+        transform:rotateY(0deg);
+        z-index:1;
+      }
+      78% {
+        transform:rotateY(0deg);
+        z-index:6;
+      }
+      92%, 100% {
+        transform:rotateY(-180deg);
+        z-index:6;
+      }
     }
 
     /* Built-in scanner */
@@ -357,7 +429,7 @@
 
   <iframe
     id="appFrame"
-    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0917J"
+    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0917K"
     title="My Library"
     allow="camera; web-share; clipboard-read; clipboard-write"
   ></iframe>
@@ -459,6 +531,74 @@
       const data = event.data || {};
 
       if (!event.source || event.source === window) return;
+
+      if (data.type === 'wiseman-library-share') {
+        libraryMessageWindow = event.source;
+
+        const requestId =
+          String(data.requestId || '');
+
+        const shareData = {
+          title:String(data.title || 'Book Quote'),
+          text:String(data.text || '')
+        };
+
+        let status = 'failed';
+        let errorName = '';
+
+        try {
+          if (!navigator.share) {
+            throw new Error('Web Share API unavailable');
+          }
+
+          if (
+            navigator.canShare &&
+            !navigator.canShare(shareData)
+          ) {
+            throw new Error('Share data is not supported');
+          }
+
+          await navigator.share(shareData);
+          status = 'shared';
+
+        } catch (error) {
+          errorName =
+            error && error.name
+              ? error.name
+              : '';
+
+          status =
+            errorName === 'AbortError'
+              ? 'cancelled'
+              : 'failed';
+
+          if (status === 'failed') {
+            console.warn(
+              'Top-level native sharing failed.',
+              error
+            );
+          }
+        }
+
+        try {
+          event.source.postMessage(
+            {
+              type:'wiseman-library-share-result',
+              requestId:requestId,
+              status:status,
+              errorName:errorName
+            },
+            '*'
+          );
+        } catch (error) {
+          console.warn(
+            'Could not return share result.',
+            error
+          );
+        }
+
+        return;
+      }
 
       if (data.type === 'wiseman-library-cover-camera-capabilities-request') {
         libraryMessageWindow = event.source;
