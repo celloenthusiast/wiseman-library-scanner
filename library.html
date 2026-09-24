@@ -6,7 +6,7 @@
 
   <title>My Library</title>
 
-  <script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790279148627&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_0000000075a881f8b7b74ce4749025f8%26fn%3Dlibrary_0917R_KnownGoodWrapperRollback.html%26cd%3Dattachment%26ts%3D497300%26p%3Dfs%26cid%3D1%26sig%3D38d086ab954c9ac96eeb7977a0e86b8ff8997aaa330137760fe24d1acac82edf%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790279148627&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
+  <script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790279148627&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_0000000020788230beba4f6f36e37a62%26fn%3Dlibrary_0917J_EXACT.html%26cd%3Dattachment%26ts%3D497300%26p%3Dfs%26cid%3D1%26sig%3Dc39645a9251df988f76952d745edc01ad017b8f0679fb34cf37f9f6106c93c17%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790279148627&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <link rel="apple-touch-icon" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -100,18 +100,55 @@
       color:var(--muted);
     }
 
-    .spinner {
-      width:24px;
-      height:24px;
+    .bookPageLoader {
+      position:relative;
+      width:34px;
+      height:25px;
       margin:18px auto 0;
-      border:3px solid #dce5e1;
-      border-top-color:var(--accent);
-      border-radius:50%;
-      animation:spin .8s linear infinite;
+      perspective:75px;
     }
 
-    @keyframes spin {
-      to { transform:rotate(360deg); }
+    .bookPageLoader::before,
+    .bookPageLoader::after {
+      content:'';
+      position:absolute;
+      top:3px;
+      width:16px;
+      height:19px;
+      border:2px solid var(--accent);
+      background:#fff;
+      box-sizing:border-box;
+    }
+
+    .bookPageLoader::before {
+      left:1px;
+      border-radius:4px 1px 1px 4px;
+      transform-origin:right center;
+    }
+
+    .bookPageLoader::after {
+      right:1px;
+      border-radius:1px 4px 4px 1px;
+      transform-origin:left center;
+      animation:bookPageFlip .85s ease-in-out infinite;
+    }
+
+    .bookPageLoader span {
+      position:absolute;
+      left:50%;
+      top:3px;
+      width:2px;
+      height:19px;
+      margin-left:-1px;
+      background:var(--accent);
+      border-radius:2px;
+      z-index:3;
+    }
+
+    @keyframes bookPageFlip {
+      0%,18% { transform:rotateY(0deg); }
+      50%,68% { transform:rotateY(-155deg); }
+      100% { transform:rotateY(-180deg); }
     }
 
     /* Built-in scanner */
@@ -314,15 +351,15 @@
       <img class="loadingIcon" src="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png" alt="">
       <div class="loadingTitle">My Library</div>
       <div class="loadingText">Opening library…</div>
-      <div class="spinner" aria-hidden="true"></div>
+      <div class="bookPageLoader" aria-hidden="true"><span></span></div>
     </div>
   </div>
 
   <iframe
     id="appFrame"
-    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0917R"
+    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0917J"
     title="My Library"
-    allow="camera; clipboard-read; clipboard-write"
+    allow="camera; web-share; clipboard-read; clipboard-write"
   ></iframe>
   <div id="scannerOverlay" aria-hidden="true">
     <div id="scannerViewport"></div>
