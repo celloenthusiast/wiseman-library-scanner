@@ -6,7 +6,7 @@
 
   <title>My Library</title>
 
-  <script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790264748277&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_00000000501c81f4abbb46d430f32b17%26fn%3Dlibrary_0917P_FullCleanBuild.html%26cd%3Dattachment%26ts%3D497296%26p%3Dfs%26cid%3D1%26sig%3Da5c0fb8a138963060fb61ec76b02e4081d05329fef9c916faed01824ea1b0a4e%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790264748277&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
+  <script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790264748277&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_00000000fb0882118b942ed834995029%26fn%3Dlibrary_0917Q_MobilePerformanceFix.html%26cd%3Dattachment%26ts%3D497296%26p%3Dfs%26cid%3D1%26sig%3D9053b426b0287cbf2bb60636d126075c0ec52fd09b97cc1c1b9e44fc2aaa85cc%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="5bb4eff6e0c94268a2e2ee20686" src="//local.adguard.org?ts=1790264748277&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="icon" type="image/png" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <link rel="apple-touch-icon" href="https://celloenthusiast.github.io/wiseman-library-scanner/favicon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -490,7 +490,7 @@
 
   <iframe
     id="appFrame"
-    src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0917P"
+    
     title="My Library"
     allow="camera; clipboard-read; clipboard-write"
   ></iframe>
@@ -543,6 +543,11 @@
     'use strict';
 
     const frame = document.getElementById('appFrame');
+    const APP_URL = 'https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?embed=1&v=0917Q';
+    frame.src =
+      APP_URL +
+      (APP_URL.includes('?') ? '&' : '?') +
+      'wrapperBuild=0917Q&ts=' + Date.now();
     const loading = document.getElementById('loading');
     const scannerOverlay = document.getElementById('scannerOverlay');
     const scannerStatus = document.getElementById('scannerStatus');
