@@ -9,16 +9,48 @@
 'use strict';
 
 const ALLOWED_PARENT_ORIGIN = 'https://celloenthusiast.github.io';
-const BRIDGE_VERSION = '0925A';
+const BRIDGE_VERSION = '0925B';
 
-function sendToParent(payload) {
-  if (window.top && window.top !== window) {
-    window.top.postMessage(payload, ALLOWED_PARENT_ORIGIN);
+function readyPayload() {
+  return {
+    type:'wiseman-library-api-ready',
+    version:BRIDGE_VERSION
+  };
+}
+
+// Apps Script HTML may sit behind an additional Google sandbox frame.
+// A READY message contains no private data, so send it toward both parent
+// and top with "*" and let the GitHub frontend identify the actual sender.
+function announceReady() {
+  const payload = readyPayload();
+
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage(payload, '*');
+    }
+  } catch (error) {}
+
+  try {
+    if (window.top && window.top !== window && window.top !== window.parent) {
+      window.top.postMessage(payload, '*');
+    } else if (window.top && window.top !== window) {
+      window.top.postMessage(payload, '*');
+    }
+  } catch (error) {}
+}
+
+function sendResult(targetWindow, targetOrigin, payload) {
+  try {
+    targetWindow.postMessage(payload, targetOrigin || ALLOWED_PARENT_ORIGIN);
+  } catch (error) {
+    try {
+      targetWindow.postMessage(payload, '*');
+    } catch (ignored) {}
   }
 }
 
-function successResult(id, result) {
-  sendToParent({
+function successResult(id, result, targetWindow, targetOrigin) {
+  sendResult(targetWindow, targetOrigin, {
     type:'wiseman-library-api-result',
     version:BRIDGE_VERSION,
     id:String(id || ''),
@@ -27,13 +59,13 @@ function successResult(id, result) {
   });
 }
 
-function failureResult(id, error) {
+function failureResult(id, error, targetWindow, targetOrigin) {
   const message =
     error && error.message
       ? error.message
       : String(error || 'Unknown Apps Script error');
 
-  sendToParent({
+  sendResult(targetWindow, targetOrigin, {
     type:'wiseman-library-api-result',
     version:BRIDGE_VERSION,
     id:String(id || ''),
@@ -42,12 +74,12 @@ function failureResult(id, error) {
   });
 }
 
-function invokeServer(functionName, args, id) {
+function invokeServer(functionName, args, id, targetWindow, targetOrigin) {
   args = Array.isArray(args) ? args : [];
 
   const runner = google.script.run
-    .withSuccessHandler(result => successResult(id, result))
-    .withFailureHandler(error => failureResult(id, error));
+    .withSuccessHandler(result => successResult(id, result, targetWindow, targetOrigin))
+    .withFailureHandler(error => failureResult(id, error, targetWindow, targetOrigin));
 
   switch (functionName) {
     case 'getLoginOptions': return runner.getLoginOptions();
@@ -88,23 +120,31 @@ function invokeServer(functionName, args, id) {
 }
 
 window.addEventListener('message', event => {
+  // Protected API calls are accepted only from the GitHub Pages origin.
   if (event.origin !== ALLOWED_PARENT_ORIGIN) return;
-  if (event.source !== window.top) return;
 
   const data = event.data || {};
   if (data.type !== 'wiseman-library-api-call') return;
 
   try {
-    invokeServer(String(data.functionName || ''), data.args, data.id);
+    invokeServer(
+      String(data.functionName || ''),
+      data.args,
+      data.id,
+      event.source,
+      event.origin
+    );
   } catch (error) {
-    failureResult(data.id, error);
+    failureResult(data.id, error, event.source, event.origin);
   }
 });
 
-sendToParent({
-  type:'wiseman-library-api-ready',
-  version:BRIDGE_VERSION
-});
+// Send READY more than once because iOS/Apps Script can attach nested frames
+// at slightly different points during navigation.
+announceReady();
+setTimeout(announceReady, 250);
+setTimeout(announceReady, 1000);
+setTimeout(announceReady, 2500);
 </script>
 </body>
 </html>
