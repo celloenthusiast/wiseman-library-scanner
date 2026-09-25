@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bridge Test</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f5f6f7;color:#17202a}
+header{padding:16px;background:#1f5f4a;color:#fff}
+#status{padding:14px;font-weight:700}
+iframe{display:block;width:100%;height:60vh;border:2px solid #999;background:#fff}
+pre{white-space:pre-wrap;padding:12px;font-size:13px}
+</style>
+</head>
+<body>
+<header>Wiseman Library Bridge Diagnostic</header>
+<div id="status">Loading Apps Script bridge iframe…</div>
+<iframe id="bridge" src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?bridge=1&v=diag1"></iframe>
+<pre id="log"></pre>
+<script>
+const status=document.getElementById('status');
+const log=document.getElementById('log');
+const frame=document.getElementById('bridge');
+let loaded=false,ready=false;
+function add(s){log.textContent+=s+"\n";}
+frame.addEventListener('load',()=>{loaded=true;status.textContent='Iframe load event fired. Waiting for bridge READY…';add('iframe load fired');});
+window.addEventListener('message',e=>{
+  const d=e.data||{};
+  add('message from '+e.origin+': '+JSON.stringify(d));
+  if(d.type==='wiseman-library-api-ready'){
+    ready=true;
+    status.textContent='SUCCESS: bridge READY received ('+(d.version||'unknown')+').';
+    status.style.background='#d1e7dd';
+  }
+});
+setTimeout(()=>{
+  if(!loaded){status.textContent='FAIL: iframe load event did not fire after 12 seconds.';status.style.background='#f8d7da';}
+  else if(!ready){status.textContent='PARTIAL: iframe loaded, but no READY message arrived.';status.style.background='#fff3cd';}
+},12000);
+</script>
+</body>
+</html>
