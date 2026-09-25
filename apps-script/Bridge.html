@@ -1,0 +1,110 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Wiseman Library API Bridge</title>
+</head>
+<body>
+<script>
+'use strict';
+
+const ALLOWED_PARENT_ORIGIN = 'https://celloenthusiast.github.io';
+const BRIDGE_VERSION = '0925A';
+
+function sendToParent(payload) {
+  if (window.top && window.top !== window) {
+    window.top.postMessage(payload, ALLOWED_PARENT_ORIGIN);
+  }
+}
+
+function successResult(id, result) {
+  sendToParent({
+    type:'wiseman-library-api-result',
+    version:BRIDGE_VERSION,
+    id:String(id || ''),
+    ok:true,
+    result:result
+  });
+}
+
+function failureResult(id, error) {
+  const message =
+    error && error.message
+      ? error.message
+      : String(error || 'Unknown Apps Script error');
+
+  sendToParent({
+    type:'wiseman-library-api-result',
+    version:BRIDGE_VERSION,
+    id:String(id || ''),
+    ok:false,
+    error:message
+  });
+}
+
+function invokeServer(functionName, args, id) {
+  args = Array.isArray(args) ? args : [];
+
+  const runner = google.script.run
+    .withSuccessHandler(result => successResult(id, result))
+    .withFailureHandler(error => failureResult(id, error));
+
+  switch (functionName) {
+    case 'getLoginOptions': return runner.getLoginOptions();
+    case 'unlockLibrary': return runner.unlockLibrary(args[0], args[1]);
+    case 'checkLibrarySession': return runner.checkLibrarySession(args[0]);
+    case 'lockLibrary': return runner.lockLibrary(args[0]);
+    case 'lookupIsbn': return runner.lookupIsbn(args[0], args[1]);
+    case 'saveBook': return runner.saveBook(args[0], args[1]);
+    case 'searchBooks': return runner.searchBooks(args[0], args[1]);
+    case 'getBook': return runner.getBook(args[0], args[1]);
+    case 'archiveBook': return runner.archiveBook(args[0], args[1], args[2]);
+    case 'getBookDeletionInfo': return runner.getBookDeletionInfo(args[0], args[1]);
+    case 'deleteBook': return runner.deleteBook(args[0], args[1]);
+    case 'getQuotes': return runner.getQuotes(args[0], args[1]);
+    case 'saveQuote': return runner.saveQuote(args[0], args[1]);
+    case 'deleteQuote': return runner.deleteQuote(args[0], args[1]);
+    case 'getMyRating': return runner.getMyRating(args[0], args[1]);
+    case 'saveMyRating': return runner.saveMyRating(args[0], args[1], args[2]);
+    case 'saveMyBookState': return runner.saveMyBookState(args[0], args[1]);
+    case 'getMyReadingHistory': return runner.getMyReadingHistory(args[0], args[1]);
+    case 'getUserAdminData': return runner.getUserAdminData(args[0]);
+    case 'setGuestPin': return runner.setGuestPin(args[0], args[1]);
+    case 'disableGuestAccess': return runner.disableGuestAccess(args[0]);
+    case 'saveNamedUser': return runner.saveNamedUser(args[0], args[1]);
+    case 'getLoanDashboard': return runner.getLoanDashboard(args[0]);
+    case 'getBorrowers': return runner.getBorrowers(args[0], args[1]);
+    case 'saveBorrower': return runner.saveBorrower(args[0], args[1]);
+    case 'setBorrowerActive': return runner.setBorrowerActive(args[0], args[1], args[2]);
+    case 'getBorrowerDetail': return runner.getBorrowerDetail(args[0], args[1]);
+    case 'createLoan': return runner.createLoan(args[0], args[1]);
+    case 'returnLoanItems': return runner.returnLoanItems(args[0], args[1]);
+    case 'searchMyQuotes': return runner.searchMyQuotes(args[0], args[1]);
+    case 'promotePersonalBookToShared': return runner.promotePersonalBookToShared(args[0], args[1]);
+    case 'pingServer': return runner.pingServer(args[0]);
+    default:
+      throw new Error('Unknown API function: ' + functionName);
+  }
+}
+
+window.addEventListener('message', event => {
+  if (event.origin !== ALLOWED_PARENT_ORIGIN) return;
+  if (event.source !== window.top) return;
+
+  const data = event.data || {};
+  if (data.type !== 'wiseman-library-api-call') return;
+
+  try {
+    invokeServer(String(data.functionName || ''), data.args, data.id);
+  } catch (error) {
+    failureResult(data.id, error);
+  }
+});
+
+sendToParent({
+  type:'wiseman-library-api-ready',
+  version:BRIDGE_VERSION
+});
+</script>
+</body>
+</html>
