@@ -1658,13 +1658,14 @@
     }
     #apiBridge {
       position:fixed;
-      width:1px;
-      height:1px;
-      left:-9999px;
-      top:-9999px;
+      width:2px;
+      height:2px;
+      left:0;
+      bottom:0;
       border:0;
-      opacity:0;
+      opacity:.001;
       pointer-events:none;
+      z-index:-1;
     }
 
   </style>
@@ -1673,7 +1674,7 @@
 <body>
 
 <iframe id="apiBridge"
-        src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?bridge=1&v=0925A"
+        src="https://script.google.com/macros/s/AKfycbyr1odCIZ-8GlyJkk6q0HpwZbnUenttEv_zgnJQ6Dznb9n-2zkpImapxUWXaVeKA71X/exec?bridge=1&v=0925B"
         title="Library API bridge"
         aria-hidden="true"></iframe>
 
@@ -2349,10 +2350,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-const API_BRIDGE_VERSION = '0925A';
+const API_BRIDGE_VERSION = '0925B';
 const API_BRIDGE_TIMEOUT_MS = 45000;
 let apiBridgeMessageWindow = null;
 let apiBridgeReady = false;
+let apiBridgeFrameLoaded = false;
+
+const apiBridgeElement = document.getElementById('apiBridge');
+if (apiBridgeElement) {
+  apiBridgeElement.addEventListener('load', () => {
+    apiBridgeFrameLoaded = true;
+  });
+}
 let apiBridgeReadyPromiseResolve = null;
 let apiBridgeReadyPromise = new Promise(resolve => {
   apiBridgeReadyPromiseResolve = resolve;
@@ -2417,7 +2426,9 @@ function waitForApiBridge(timeoutMs) {
     apiBridgeReadyPromise,
     new Promise((_, reject) => {
       setTimeout(() => reject(new Error(
-        'The Apps Script API bridge did not load. Make sure the test bridge is deployed, then reload the page.'
+        apiBridgeFrameLoaded
+          ? 'The Apps Script bridge iframe loaded, but the bridge did not connect. Make sure Bridge.html is the 0925B version and redeploy Apps Script.'
+          : 'The Apps Script bridge iframe itself did not load. Check the Apps Script deployment and reload the page.'
       )), ms);
     })
   ]);
