@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10271f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Scan Book Barcode</title>
+  <script type="text/javascript" nonce="01710f1e7e9c48e19121f6c51d3" src="//local.adguard.org?ts=1788718245692&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000007df8822fbe73852f81849d83%26fn%3Dscanner.html%26cd%3Dattachment%26ts%3D496867%26p%3Dfs%26cid%3D1%26sig%3Dc2ffa4d73b0c723f93e5cee146d24a6bb6e35373043bd76f098af837ec7ad158%26v%3D0&amp;app=com.brave.Browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-push&amp;st-loc&amp;st-dnt"></script><script type="text/javascript" nonce="01710f1e7e9c48e19121f6c51d3" src="//local.adguard.org?ts=1788718245692&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin:0; min-height:100%; background:#08130f; color:white; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    body { min-height:100vh; min-height:100svh; overflow:hidden; }
+    #reader { position:fixed; inset:0; width:100vw; height:100vh; height:100svh; background:#000; }
+    #reader video { width:100% !important; height:100vh !important; height:100svh !important; object-fit:cover !important; }
+    #reader > div:first-child { display:none !important; }
+    .shade { position:fixed; inset:0; pointer-events:none; z-index:10; background:
+      linear-gradient(to bottom, rgba(0,0,0,.56) 0 30%, transparent 30% 59%, rgba(0,0,0,.56) 59% 100%); }
+    .target {
+      position:fixed; z-index:11; left:7vw; right:7vw; top:30vh; height:29vh;
+      border:3px solid rgba(255,255,255,.95); border-radius:18px; pointer-events:none;
+      box-shadow:0 0 0 1px rgba(0,0,0,.25);
+    }
+    .target::before {
+      content:""; position:absolute; left:7%; right:7%; top:50%; height:2px;
+      background:rgba(255,80,80,.9); box-shadow:0 0 8px rgba(255,80,80,.75);
+    }
+    .top {
+      position:fixed; z-index:20; top:0; left:0; right:0;
+      padding:max(18px,env(safe-area-inset-top)) 18px 16px;
+      text-align:center; text-shadow:0 1px 4px #000;
+    }
+    .top h1 { margin:6px 0 4px; font-size:22px; }
+    .top p { margin:0; font-size:14px; opacity:.9; }
+    .bottom {
+      position:fixed; z-index:20; left:0; right:0; bottom:0;
+      padding:16px 18px max(18px,env(safe-area-inset-bottom));
+      text-align:center;
+    }
+    #status { min-height:22px; margin-bottom:10px; font-size:14px; text-shadow:0 1px 4px #000; }
+    button {
+      min-height:48px; border:0; border-radius:12px; padding:10px 18px;
+      font:inherit; font-weight:700;
+    }
+    #closeBtn { background:rgba(255,255,255,.92); color:#17202a; min-width:140px; }
+    #torchBtn { margin-left:8px; background:rgba(31,95,74,.94); color:#fff; display:none; }
+    .success {
+      position:fixed; inset:0; z-index:50; display:none; place-items:center;
+      background:rgba(8,19,15,.88); padding:30px; text-align:center;
+    }
+    .success.show { display:grid; }
+    .check { font-size:64px; line-height:1; }
+    .isbn { font-size:22px; font-weight:800; margin-top:10px; }
+  </style>
+</head>
+<body>
+  <div id="reader"></div>
+  <div class="shade"></div>
+  <div class="target"></div>
+
+  <div class="top">
+    <h1>Scan Book Barcode</h1>
+    <p>Hold the ISBN barcode inside the box.</p>
+  </div>
+
+  <div class="bottom">
+    <div id="status">Starting rear camera…</div>
+    <button id="closeBtn" onclick="closeScanner()">Cancel</button>
+    <button id="torchBtn" onclick="toggleTorch()">Flash</button>
+  </div>
+
+  <div id="success" class="success">
+    <div>
+      <div class="check">✓</div>
+      <div>Barcode read</div>
+      <div id="successIsbn" class="isbn"></div>
+    </div>
+  </div>
+
+<script>
+let scanner;
+let finished = false;
+let torchOn = false;
+const returnUrl = new URLSearchParams(location.search).get('return') || '';
+
+function normalizeBookBarcode(raw) {
+  const digits = String(raw || '').replace(/\D/g, '');
+
+  if (digits.length === 13 && (digits.startsWith('978') || digits.startsWith('979'))) return digits;
+  if (digits.length === 12) return digits;
+  if (digits.length === 8) return digits;
+
+  return '';
+}
+
+async function startScanner() {
+  scanner = new Html5Qrcode('reader');
+
+  const config = {
+    fps: 15,
+    qrbox: function(viewfinderWidth, viewfinderHeight) {
+      return {
+        width: Math.floor(viewfinderWidth * 0.86),
+        height: Math.floor(Math.min(viewfinderHeight * 0.28, 190))
+      };
+    },
+    aspectRatio: 1.777778,
+    disableFlip: true,
+    formatsToSupport: [
+      Html5QrcodeSupportedFormats.EAN_13,
+      Html5QrcodeSupportedFormats.UPC_A,
+      Html5QrcodeSupportedFormats.UPC_E,
+      Html5QrcodeSupportedFormats.EAN_8
+    ],
+    experimentalFeatures: {
+      useBarCodeDetectorIfSupported: true
+    }
+  };
+
+  try {
+    await scanner.start(
+      { facingMode: { exact: 'environment' } },
+      config,
+      onScanSuccess,
+      () => {}
+    );
+    document.getElementById('status').textContent = 'Ready — point at the ISBN barcode.';
+    detectTorch();
+  } catch (firstError) {
+    try {
+      await scanner.start(
+        { facingMode: 'environment' },
+        config,
+        onScanSuccess,
+        () => {}
+      );
+      document.getElementById('status').textContent = 'Ready — point at the ISBN barcode.';
+      detectTorch();
+    } catch (error) {
+      document.getElementById('status').textContent =
+        'Camera could not start. Check camera permission for this site.';
+      console.error(error);
+    }
+  }
+}
+
+async function onScanSuccess(decodedText) {
+  if (finished) return;
+  const isbn = normalizeBookBarcode(decodedText);
+  if (!isbn) return;
+
+  finished = true;
+  if (navigator.vibrate) navigator.vibrate(80);
+
+  document.getElementById('successIsbn').textContent = isbn;
+  document.getElementById('success').classList.add('show');
+
+  try { await scanner.stop(); } catch (e) {}
+
+  let sent = false;
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage(
+        { type: 'wiseman-library-isbn', isbn: isbn },
+        '*'
+      );
+      sent = true;
+    }
+  } catch (e) {}
+
+  setTimeout(() => {
+    if (sent) {
+      window.close();
+    } else if (returnUrl) {
+      const separator = returnUrl.includes('?') ? '&' : '?';
+      location.href = returnUrl + separator + 'isbn=' + encodeURIComponent(isbn);
+    } else {
+      document.getElementById('status').textContent =
+        'ISBN ' + isbn + ' — return to the Library app and enter it manually.';
+      document.getElementById('success').classList.remove('show');
+    }
+  }, 300);
+}
+
+function detectTorch() {
+  try {
+    const caps = scanner.getRunningTrackCameraCapabilities();
+    if (caps && caps.torchFeature && caps.torchFeature().isSupported()) {
+      document.getElementById('torchBtn').style.display = 'inline-block';
+    }
+  } catch (e) {}
+}
+
+async function toggleTorch() {
+  try {
+    torchOn = !torchOn;
+    await scanner.applyVideoConstraints({ advanced: [{ torch: torchOn }] });
+    document.getElementById('torchBtn').textContent = torchOn ? 'Flash Off' : 'Flash';
+  } catch (e) {
+    document.getElementById('torchBtn').style.display = 'none';
+  }
+}
+
+async function closeScanner() {
+  try { if (scanner) await scanner.stop(); } catch (e) {}
+  window.close();
+  if (!window.closed && returnUrl) location.href = returnUrl;
+}
+
+startScanner();
+</script>
+</body>
+</html>
